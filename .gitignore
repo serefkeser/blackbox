@@ -1,0 +1,11 @@
+# Hassas dosyalar — public repo'ya gitmez
+.env
+cert.pem
+key.pem
+linkedin_token.json
+TzKTJgJ-5MqnfzY8Ugx-1xmbZfb9CQ24rSF.txt
+
+# Geçici dosyalar
+temp_chunks/
+*.mp4
+node_modules/

@@ -1,0 +1,14 @@
+Müzik: polyushka.mp3 kalıcı hafızadan okunarak fon müziği olarak eklendi.
+Gazete: Dünya gazetesi seçildi, 6 adet haber başlığı otomatik tespit edildi.
+Kapak Sahnesi (Clickbait Hook):
+İlk kapak resmi yapay zeka tarafından sinematik & dramatik kanca konseptiyle 
+sıfırdan çizildi ("Dramatic cinematic shot of a large cargo...").
+Clickbait kanca seslendirmesi ve görseli 1. sahneye yerleşti.
+Devam Sahneleri (Sabit Gazete):
+Clickbait sahnesinden sonra 6 haber başlığı ve detayı arka planda sabit 
+Dünya gazetesi resmi kalacak şekilde seslendirildi.
+Kapanış:
+"Tedbir, tedaviden ucuzdur..." vurucu Son Söz seslendirildi ve 
+Abone Ol / Takip Et mesajı ile video tamamlandı.
+Render & Kayıt:
+12 sahnenin tamamı (Kapak + Manşetler + Son Söz + Kapanış) 4K kalitede render edilip MP4 videosu başarıyla oluşturuldu (Status: COMPLETED).
