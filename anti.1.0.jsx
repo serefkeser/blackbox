@@ -86,6 +86,14 @@
 //   - Her başlık için tek sahne (başlık+açıklama birleşik seslendirme)
 //   - _isGazeteOkuma flag: thumbnail için gazete resmi kullanılır, AI kapak atlanır
 //   - Tüm başlıklar okununca son söz + outro → video paketlenir
+//
+// black_2.7 (anti.1.0):
+//   - Buffer token kontrolü: token YOK ise erken return + net hata mesajı
+//   - isHttpsRemoteOrigin: hostname boş ise remote say (Gemini Canvas fix)
+//   - CORS proxy URL encode + cors.eu.org eklendi
+//   - UI: Ayarlar bölümüne Buffer API Token input eklendi
+//   - Paylaşım log paneli: KOPYALA butonu + işlem bitse bile ekranda kalır
+//   - Tüm paylaşım aşamalarında [DEBUG] detaylı log
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -155,8 +163,8 @@ try {
 // ── APP_VERSION: Tek kaynak versiyon yönetimi ──────────────────────────────
 const APP_VERSION = {
   major: 2,
-  minor: 6,
-  hotfix: 'H2.6',
+  minor: 7,
+  hotfix: 'H2.7',
   toString() { return `BLACKBOX black_${this.major}.${this.minor}`; },
   toBadge() { return `${this.toString()} • One-Page`; }
 };
@@ -4257,14 +4265,24 @@ class ErrorBoundary extends React.Component {
               // Buffer API ile Anında Otomatik Sosyal Medya Paylaşımı (Dinamik Kanal Algılama + Gerçek MP4 Video Desteği)
               const shareToBufferAPI = async (text, mediaUrl = null) => {
                 const token = SafeStorage.getItem('BUFFER_API_KEY') || '';
-                const isHttpsRemoteOrigin = typeof window !== 'undefined' && 
-                  window.location.protocol === 'https:' && 
-                  !window.location.hostname.includes('localhost') && 
-                  !window.location.hostname.includes('127.0.0.1');
+                const isHttpsRemoteOrigin = typeof window !== 'undefined' &&
+                  window.location.protocol === 'https:' &&
+                  (!window.location.hostname ||
+                   window.location.hostname.includes('localhost') === false &&
+                   window.location.hostname.includes('127.0.0.1') === false);
+
+                addSystemLog(`[DEBUG] shareToBufferAPI başladı | token: ${token ? token.slice(0,8)+'...' : 'YOK'} | origin: ${isHttpsRemoteOrigin ? 'remote' : 'local'} | hostname: ${window.location.hostname || 'BOS'}`, 'info');
+
+                if (!token) {
+                  addSystemLog('[PAYLAS] HATA: Buffer API Token bulunamadi! Ayarlar tabindan token girin.', 'error');
+                  addSystemLog('[PAYLAS] Token: https://buffer.com/app/account/api adresinden alinir.', 'info');
+                  return 0;
+                }
 
                 const endpoints = [
                   ...(!isHttpsRemoteOrigin ? ['http://localhost:3000/buffer_proxy', 'http://127.0.0.1:3000/buffer_proxy'] : []),
-                  'https://corsproxy.io/?url=https://api.buffer.com/graphql',
+                  'https://corsproxy.io/?url=' + encodeURIComponent('https://api.buffer.com/graphql'),
+                  'https://cors.eu.org/https://api.buffer.com/graphql',
                   'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://api.buffer.com/graphql')
                 ];
 
@@ -4282,7 +4300,9 @@ class ErrorBoundary extends React.Component {
                 const ext = isVideo ? 'mp4' : 'jpg';
 
                 if (targetMedia) {
+                  addSystemLog(`[DEBUG] Bulut yükleme başladı | media: ${typeof targetMedia === 'string' ? targetMedia.slice(0,50) : 'non-string'} | isVideo: ${isVideo}`, 'info');
                   directCloudUrl = await uploadMediaToCloud(targetMedia, `otonom_video_${Date.now()}.${ext}`);
+                  addSystemLog(`[DEBUG] Bulut yükleme sonucu: ${directCloudUrl || 'BAŞARISIZ'}`, directCloudUrl ? 'success' : 'warn');
                 }
 
                 // 2. Fallback görsel (bulut yüklemesi başarısızsa)
@@ -4298,9 +4318,10 @@ class ErrorBoundary extends React.Component {
 
                 // 3. Sunucu destekli tek tıkla otomatik paylaşım (CORS/PNA engellerini aşar)
                 const serverUrl = await getLinkedInServerUrl();
+                addSystemLog(`[DEBUG] getLinkedInServerUrl sonucu: ${serverUrl || 'YOK (remote/local)'}`, 'info');
                 if (serverUrl) {
                   try {
-                    addSystemLog('ℹ️ Yerel sunucu üzerinden Buffer paylaşımı başlatılıyor...', 'info');
+                    addSystemLog(`[DEBUG] Yerel sunucu Buffer paylaşımı: ${serverUrl}/buffer/share-all`, 'info');
                     const res = await fetch(`${serverUrl}/buffer/share-all`, {
                       method: 'POST',
                       headers: {
@@ -4313,15 +4334,20 @@ class ErrorBoundary extends React.Component {
                         token
                       })
                     });
+                    addSystemLog(`[DEBUG] Sunucu response: HTTP ${res.status} ${res.statusText}`, res.ok ? 'success' : 'warn');
                     if (res.ok) {
                       const json = await res.json();
+                      addSystemLog(`[DEBUG] Sunucu JSON: ${JSON.stringify(json).slice(0,200)}`, 'info');
                       if (json.status === 'success') {
                         addSystemLog(`✓ Buffer üzerinden ${json.channels_count || 3} sosyal medya kanalına başarıyla gönderildi!`, 'success');
                         return true;
                       }
+                    } else {
+                      const errText = await res.text().catch(() => '');
+                      addSystemLog(`[DEBUG] Sunucu hata body: ${errText.slice(0,200)}`, 'warn');
                     }
                   } catch(e) {
-                    console.warn('Yerel sunucu Buffer paylaşım uyarısı:', e.message);
+                    addSystemLog(`[DEBUG] Sunucu fetch hatası: ${e.name}: ${e.message}`, 'warn');
                   }
                 }
                 let activeChannels = [];
@@ -4338,21 +4364,29 @@ class ErrorBoundary extends React.Component {
                   let orgId = null;
                   for (const ep of endpoints) {
                     try {
+                      addSystemLog(`[DEBUG] Kanal tespiti deniyor: ${ep.slice(0,60)}`, 'info');
                       const res = await fetch(ep, {
                         method: 'POST',
-                        headers: { 
-                          'Content-Type': 'application/json', 
+                        headers: {
+                          'Content-Type': 'application/json',
                           'Authorization': `Bearer ${token}`,
                           'X-Local-Proxy-Auth': PROXY_AUTH_TOKEN
                         },
                         body: JSON.stringify({ query: getChannelsQuery, token, variables: {} })
                       });
+                      addSystemLog(`[DEBUG] Kanal tespiti response: HTTP ${res.status}`, res.ok ? 'success' : 'warn');
                       if (res.ok) {
                         const json = await res.json();
                         orgId = json.data?.account?.organizations?.[0]?.id;
+                        addSystemLog(`[DEBUG] orgId: ${orgId || 'YOK'}`, 'info');
                         if (orgId) break;
+                      } else {
+                        const errBody = await res.text().catch(() => '');
+                        addSystemLog(`[DEBUG] Kanal tespiti hata: ${errBody.slice(0,150)}`, 'warn');
                       }
-                    } catch(e) {}
+                    } catch(e) {
+                      addSystemLog(`[DEBUG] Kanal tespiti fetch hatası: ${e.name}: ${e.message}`, 'warn');
+                    }
                   }
 
                   if (orgId) {
@@ -4367,6 +4401,7 @@ class ErrorBoundary extends React.Component {
                     `;
                     for (const ep of endpoints) {
                       try {
+                        addSystemLog(`[DEBUG] Kanal listesi cekiliyor: ${ep.slice(0,60)}`, 'info');
                         const res = await fetch(ep, {
                           method: 'POST',
                           headers: { 
@@ -4376,17 +4411,23 @@ class ErrorBoundary extends React.Component {
                           },
                           body: JSON.stringify({ query: chanQuery, token, variables: { input: { organizationId: orgId } } })
                         });
+                        addSystemLog(`[DEBUG] Kanal listesi response: HTTP ${res.status}`, res.ok ? 'success' : 'warn');
                         if (res.ok) {
                           const json = await res.json();
                           if (Array.isArray(json.data?.channels) && json.data.channels.length > 0) {
                             activeChannels = json.data.channels;
+                            addSystemLog(`[DEBUG] ${activeChannels.length} kanal bulundu: ${activeChannels.map(c=>c.service).join(',')}`, 'success');
                             break;
                           }
                         }
-                      } catch(e) {}
+                      } catch(e) {
+                        addSystemLog(`[DEBUG] Kanal listesi fetch hatasi: ${e.name}: ${e.message}`, 'warn');
+                      }
                     }
                   }
-                } catch(e) {}
+                } catch(e) {
+                  addSystemLog(`[DEBUG] Kanal tespiti genel hata: ${e.name}: ${e.message}`, 'warn');
+                }
 
                 // Dinamik çekilemediyse varsayılan kanal listesini kullan (TikTok dahil)
                 if (activeChannels.length === 0) {
@@ -4445,6 +4486,7 @@ class ErrorBoundary extends React.Component {
                   for (const ep of endpoints) {
                     if (posted) break;
                     try {
+                      addSystemLog(`[DEBUG] createPost deniyor: ${ch.name} → ${ep.slice(0,60)}`, 'info');
                       const res = await fetch(ep, {
                         method: 'POST',
                         headers: {
@@ -4454,8 +4496,10 @@ class ErrorBoundary extends React.Component {
                         },
                         body: JSON.stringify({ query: mutation, token, variables })
                       });
+                      addSystemLog(`[DEBUG] createPost response: HTTP ${res.status} ${res.statusText}`, res.ok ? 'success' : 'warn');
                       if (res.ok) {
                         const json = await res.json();
+                        addSystemLog(`[DEBUG] createPost JSON: ${JSON.stringify(json).slice(0,200)}`, 'info');
                         if (json.data?.createPost?.post?.id) {
                           posted = true;
                           successCount++;
@@ -4463,9 +4507,12 @@ class ErrorBoundary extends React.Component {
                         } else if (json.data?.createPost?.message) {
                           addSystemLog(`⚠️ ${ch.name} uyarısı: ${json.data.createPost.message}`, 'warn');
                         }
+                      } else {
+                        const errBody = await res.text().catch(() => '');
+                        addSystemLog(`[DEBUG] createPost hata body: ${errBody.slice(0,200)}`, 'warn');
                       }
                     } catch(e) {
-                      console.warn('Buffer proxy fetch uyarısı:', e);
+                      addSystemLog(`[DEBUG] createPost fetch hatası: ${e.name}: ${e.message}`, 'warn');
                     }
                   }
                 }
@@ -4477,26 +4524,34 @@ class ErrorBoundary extends React.Component {
 
               const shareToSelectedPlatforms = async () => {
                 const title = textInput || workflowRef.current?.state?.script?.thumbnailText || 'OTONOM Haber';
-                addSystemLog('Sosyal medya hesaplarınıza (Buffer & LinkedIn API) gönderiliyor...', 'info');
+                addSystemLog('[PAYLAS] Paylasim basladi | title: ' + title.slice(0,60), 'info');
+                addSystemLog('[PAYLAS] videoUrl: ' + (uiState.videoUrl || 'YOK'), 'info');
+                addSystemLog('[PAYLAS] origin: ' + (typeof window !== 'undefined' ? window.location.hostname : 'SSR'), 'info');
                 
                 // 1. Buffer Hesabındaki Tüm Kanallarda Paylaş (Twitter, Instagram, TikTok vb.)
                 try {
+                  addSystemLog('[PAYLAS] Buffer API cagriliyor...', 'info');
                   const count = await shareToBufferAPI(title, uiState.videoUrl);
+                  addSystemLog(`[PAYLAS] Buffer sonuc: ${count} kanal basarili`, count > 0 ? 'success' : 'warn');
                   if (count > 0) {
                     addSystemLog(`✓ Buffer ile ${count} sosyal medya kanalında (Twitter, Instagram, TikTok) paylaşıldı! 🚀`, 'success');
                   } else {
                     addSystemLog('Buffer paylaşımı tamamlandı. ✅', 'success');
                   }
                 } catch(e) {
-                  addSystemLog('Buffer paylaşım uyarısı: ' + e.message, 'warn');
+                  addSystemLog(`[PAYLAS] Buffer hata: ${e.name}: ${e.message}`, 'warn');
+                  addSystemLog(`[PAYLAS] Buffer stack: ${e.stack?.slice(0,300)}`, 'warn');
                 }
 
                 // 2. Doğrudan LinkedIn API ile Paylaş (linkedin_server.py)
                 try {
+                  addSystemLog('[PAYLAS] LinkedIn sunucu araniyor...', 'info');
                   const linkedInServerUrl = await getLinkedInServerUrl();
+                  addSystemLog(`[PAYLAS] LinkedIn sunucu: ${linkedInServerUrl || 'YOK'}`, linkedInServerUrl ? 'success' : 'warn');
                   if (linkedInServerUrl) {
                     addSystemLog('Doğrudan LinkedIn API ile paylaşım başlatılıyor...', 'info');
                     const res = await shareToLinkedInAPI(title, null, null, null, uiState.videoUrl);
+                    addSystemLog(`[PAYLAS] LinkedIn API sonuc: ${JSON.stringify(res).slice(0,200)}`, 'info');
                     if (res && (res.id || res.status === 'success')) {
                       addSystemLog(`✓ Doğrudan LinkedIn API ile başarıyla paylaşıldı! 🚀`, 'success');
                     }
@@ -4504,8 +4559,10 @@ class ErrorBoundary extends React.Component {
                     addSystemLog('LinkedIn sunucusu bulunamadı (linkedin_server.py). Sadece Buffer kullanıldı.', 'info');
                   }
                 } catch(e) {
-                  addSystemLog('Doğrudan LinkedIn paylaşım uyarısı: ' + e.message, 'warn');
+                  addSystemLog(`[PAYLAS] LinkedIn hata: ${e.name}: ${e.message}`, 'warn');
+                  addSystemLog(`[PAYLAS] LinkedIn stack: ${e.stack?.slice(0,300)}`, 'warn');
                 }
+                addSystemLog('[PAYLAS] Paylasim tamamlandi', 'info');
               };
 
               const shareToPlatform = async (platform, title, videoUrl) => {
@@ -5317,6 +5374,14 @@ class ErrorBoundary extends React.Component {
               </div>
               </div>
 
+                {/* BUFFER API TOKEN */}
+                <div className="bg-black/30 p-2.5 rounded-xl border border-slate-800 flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full">
+                <input type="password" value={SafeStorage.getItem('BUFFER_API_KEY') || ''} onChange={(e) => { SafeStorage.setItem('BUFFER_API_KEY', e.target.value); addSystemLog('Buffer API Token kaydedildi', 'success'); }} placeholder="Buffer API Token (TzKT...)" className="w-full bg-transparent text-sm text-slate-200 outline-none placeholder:text-slate-600" />
+                <a href="https://buffer.com/app/account/api" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 text-[9px] font-bold uppercase tracking-wider shrink-0 transition-colors">Al</a>
+                </div>
+                </div>
+
                 {/* KAYNAK ADI + SABİT GÖRSEL + YORUM */}
                 <div className="grid grid-cols-3 gap-3 mb-3">
                 <div className="bg-black/30 p-2 rounded-xl border border-slate-800 flex items-center justify-center">
@@ -5583,6 +5648,16 @@ class ErrorBoundary extends React.Component {
                     <button onClick={shareToSelectedPlatforms} className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-indigo-500/20 transition-all active:scale-95"><Share2 size={14} /> PAYLAŞ</button>
                     <button onClick={async () => { setUiState(prev => ({ ...prev, videoUrl: null, selectedMediaFiles: [], percent: 0, statusText: '', error: '' })); setConfig(prev => ({ ...prev, yorum: '', sourceName: '' })); for (let i = 0; i < RENDER_CONFIG.MAX_CUSTOM_SCENE_IMAGES; i++) await AssetManagerService.deleteMedia("CUSTOM_SCENE_IMG_" + i); setStudioMedia(s => ({ ...s, customSceneImages: [] })); }} className="bg-slate-700 hover:bg-slate-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all active:scale-95"><RotateCcw size={14} /> {(config.tip === 'guzel_soz' || config.tip === 'iddia_analizi') ? 'YENİ SÖZ' : 'YENİ HABER'}</button>
                   </div>
+                  {/* PAYLAS LOG PANELI — islem bitse bile ekranda kalir, kopyalanabilir */}
+                  {sysLogs && sysLogs.length > 0 && (
+                    <div className="mt-6 bg-slate-950/90 border border-slate-800 rounded-2xl p-4 text-left font-mono text-[11px] leading-relaxed max-h-64 overflow-y-auto space-y-1.5 relative">
+                      <div className="flex items-center justify-between mb-2 sticky top-0 bg-slate-950/95 py-1 z-10">
+                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Paylasim Loglari ({sysLogs.length})</span>
+                        <button onClick={() => { const txt = sysLogs.map(l => `[${l.timestamp}] ${l.type.toUpperCase()}: ${l.text}`).join('\n'); navigator.clipboard?.writeText(txt).then(() => addSystemLog('Log panoya kopyalandi', 'success')).catch(() => { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); addSystemLog('Log panoya kopyalandi (fallback)', 'success'); }); }} className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded-lg text-[10px] font-bold border border-slate-700 transition-all active:scale-95">KOPYALA</button>
+                      </div>
+                      {sysLogs.map((log, idx) => { let c = "text-slate-400"; if (log.type === "success") c = "text-emerald-400 font-bold"; if (log.type === "warn") c = "text-amber-400 font-bold"; if (log.type === "error") c = "text-rose-400 font-bold animate-pulse"; return (<div key={idx} className={`flex items-start gap-2 ${c}`}><span className="text-slate-600 shrink-0 select-none">[{log.timestamp}]</span><span className="break-all">{log.text}</span></div>); })}
+                    </div>
+                  )}
                   </div>
                   )}
               </div>
@@ -5597,7 +5672,8 @@ class ErrorBoundary extends React.Component {
                     <p className="text-indigo-400 font-bold text-sm mb-3 uppercase tracking-widest">{uiState.statusText}</p>
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800 text-slate-400 text-xs font-mono mb-4 border border-slate-700/50"><Clock size={12} /> Geçen: {elapsedSeconds}sn</div>
                     {sysLogs && sysLogs.length > 0 && (
-                        <div className="mt-4 bg-slate-950/90 border border-slate-800 rounded-2xl p-4 text-left font-mono text-[11px] leading-relaxed max-h-48 overflow-y-auto space-y-1.5">
+                        <div className="mt-4 bg-slate-950/90 border border-slate-800 rounded-2xl p-4 text-left font-mono text-[11px] leading-relaxed max-h-48 overflow-y-auto space-y-1.5 relative">
+                        <button onClick={() => { const txt = sysLogs.map(l => `[${l.timestamp}] ${l.type.toUpperCase()}: ${l.text}`).join('\n'); navigator.clipboard?.writeText(txt).then(() => addSystemLog('Log panoya kopyalandi', 'success')).catch(() => { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); addSystemLog('Log panoya kopyalandi (fallback)', 'success'); }); }} className="absolute top-2 right-2 bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded-lg text-[10px] font-bold border border-slate-700 transition-all active:scale-95 z-10">KOPYALA</button>
                         {sysLogs.map((log, idx) => { let c = "text-slate-400"; if (log.type === "success") c = "text-emerald-400 font-bold"; if (log.type === "warn") c = "text-amber-400 font-bold"; if (log.type === "error") c = "text-rose-400 font-bold animate-pulse"; return (<div key={idx} className={`flex items-start gap-2 ${c}`}><span className="text-slate-600 shrink-0 select-none">[{log.timestamp}]</span><span className="break-all">{log.text}</span></div>); })}
                         <div ref={logEndRef} />
                       </div>
@@ -5628,5 +5704,5 @@ class ErrorBoundary extends React.Component {
             }
 
 
-// OTONOM black_2.6 — Gemini Canvas uyumlu versiyon
+// OTONOM black_2.7 — Gemini Canvas uyumlu versiyon
 // Tüm fonksiyonlar tek dosyada, kopyala-yapıştır ile Canvas'ta çalışır.

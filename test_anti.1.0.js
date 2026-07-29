@@ -36,8 +36,8 @@ t('No gsk_ key', !/gsk_[A-Za-z0-9]{20,}/.test(src));
 
 // 3. APP_VERSION (updated to 2.4)
 t('APP_VERSION major=2', /APP_VERSION\s*=\s*\{[\s\S]*?major:\s*2[,\s]/.test(src));
-t('APP_VERSION minor=6', /APP_VERSION\s*=\s*\{[\s\S]*?minor:\s*6[,\s]/.test(src));
-t('APP_VERSION hotfix=H2.6', /hotfix:\s*['"]H2\.6['"]/.test(src));
+t('APP_VERSION minor=7', /APP_VERSION\s*=\s*\{[\s\S]*?minor:\s*7[,\s]/.test(src));
+t('APP_VERSION hotfix=H2.7', /hotfix:\s*['"]H2\.7['"]/.test(src));
 
 // 4. exportWorkflowLog uses APP_VERSION.toString()
 const exLog = src.match(/exportWorkflowLog[\s\S]{0,2000}/);
@@ -177,8 +177,8 @@ t('No hardcoded otonom_proxy_secret (except constant def)', hardcodedTokenLines.
 t('No hardcoded 2026/7/28 in static_gzt URLs', !/2026\/7\/28/.test(src));
 
 // 29. Version history
-t('Version history has black_2.6', /black_2\.6\s*\(anti\.1\.0\)/.test(src));
-t('Last line says black_2.6', /OTONOM black_2\.6/.test(src));
+t('Version history has black_2.7', /black_2\.7\s*\(anti\.1\.0\)/.test(src));
+t('Last line says black_2.7', /OTONOM black_2\.7/.test(src));
 
 // 30. Music search + preview
 t('Music search query state', /musicSearchQuery/.test(src));
@@ -212,9 +212,15 @@ t('_isGazeteOkuma flag defined', /_isGazeteOkuma\s*=\s*true/.test(src));
 t('Gazete okuma: tek sahne per baslik (no AI prompt)', /imagePrompts:\s*\[\],\s*\n\s*\}\s*\n\s*\]\s*\n\s*\}\);[\s\S]*?addSystemLog.*BAŞLIKLAR/.test(src) || /_isGazeteOkuma[\s\S]{0,500}imagePrompts:\s*\[\]/.test(src));
 t('Gazete okuma: thumbnail gazete resmi (AI atlanır)', /_isGazeteOkuma[\s\S]{0,300}thumbnail.*customImage/.test(src));
 
+// 37. Buffer token kontrolü (black_2.7)
+t('Buffer token early return', /if\s*\(!token\)[\s\S]{0,400}return\s+0/.test(src));
+t('Buffer token UI input', /BUFFER_API_KEY.*onChange.*SafeStorage\.setItem/.test(src));
+t('cors.eu.org proxy', /cors\.eu\.org/.test(src));
+t('corsproxy.io URL encoded', /corsproxy\.io\/\?url=.*encodeURIComponent/.test(src));
+
 // ═══ RESULTS ═══
 console.log('═══════════════════════════════════════════════════════════════');
-console.log(`  anti.1.0.jsx (black_2.6) TEST RESULTS: ${pass} PASS / ${fail} FAIL / ${pass+fail} TOTAL`);
+console.log(`  anti.1.0.jsx (black_2.7) TEST RESULTS: ${pass} PASS / ${fail} FAIL / ${pass+fail} TOTAL`);
 console.log('═══════════════════════════════════════════════════════════════');
 out.forEach(r => console.log(`  ${r}`));
 console.log('═══════════════════════════════════════════════════════════════');
@@ -222,6 +228,6 @@ if (fail > 0) {
   console.log(`  ❌ ${fail} TEST(LER) BAŞARISIZ — DÜZELTME GEREKİYOR`);
   process.exit(1);
 } else {
-  console.log(`  ✅ TÜM TESTLER BAŞARILI — anti.1.0.jsx (black_2.6) ONAYLANDI`);
+  console.log(`  ✅ TÜM TESTLER BAŞARILI — anti.1.0.jsx (black_2.7) ONAYLANDI`);
   process.exit(0);
 }
