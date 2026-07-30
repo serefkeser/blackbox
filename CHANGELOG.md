@@ -2,6 +2,22 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.5] — 2026-07-30
+
+### Render Senkronizasyonu, TTS Hızı ve Bulut Yükleme Fix'leri
+- **Sorun 1 — Timer worker FPS uyumsuzluğu**: `_createTimerWorker` içinde `frameInterval` sabit `1000 / 30` (33.33ms) olarak yazılmıştı ama `RENDER_CONFIG.TIMER_WORKER_INTERVAL_MS` 25ms idi. Kod iki farklı değer arasında çelişkiliydu; render 30fps varsayımıyla hesaplanırken worker teorik olarak daha hızlı tick atıyordu. Süre hesaplarında kayma riski vardı.
+- **Çözüm**: `RENDER_CONFIG.TIMER_WORKER_INTERVAL_MS` `1000 / 30` (33.33ms) olarak güncellendi ve `_createTimerWorker` doğrudan config'den okuyor. Artık tek kaynak ve 30fps ile senkron.
+- **Sorun 2 — Ken Burns flicker**: `executeRender` içindeki `renderScene` zoom koordinatlarında pan değerleri her frame `Math.random()` ile üretiliyordu. Bu durum videoda titreşim/flicker oluşturuyor ve render deterministik olmuyordu.
+- **Çözüm**: Pan değerleri sahne başında bir kere üretilip `zoomPanSeed` değişkeninde saklanıyor; frame loop içinde aynı seed'ten ilerleniyor.
+- **Sorun 3 — TTS hızı scaleFactor ile artıyordu**: `playAudio` içinde `source.playbackRate.value = Math.max(scaleFactor, RENDER_CONFIG.SPEECH_RATE)` vardı. Süre sınırı nedeniyle `scaleFactor > 1` olduğunda ses hızlanıyor, kullanıcı "normal konuşma hızı" beklerken hızlı çıktı duyuyordu.
+- **Çözüm**: TTS playback rate sabit `RENDER_CONFIG.SPEECH_RATE` (1.0) olarak ayarlandı. Süre sıkıştırma sadece görsel sahne süresi ve frame sayısına uygulanıyor; ses hızı sabit kalıyor.
+- **Sorun 4 — Ekonomik veri tarihleri eski kalmıştı**: Dolar/TL, Euro/TL, Gram Altın, Çeyrek Altın verilerinin `dataAsOf` alanı 16 Temmuz 2026'ydı; bugün 30 Temmuz 2026.
+- **Çözüm**: Döviz ve altın verilerinin `dataAsOf` tarihleri 30 Temmuz 2026'ya güncellendi. (Rakamlar kullanıcı tarafından sağlanacaksa sonradan değiştirilebilir; etiket tarihi şimdi güncel.)
+- **Sorun 5 — catbox.moe CORS proxy stratejisi hatalıydı**: FormData POST body'sini `corsproxy.io/?url=` gibi GET query parametrelerine sarmak dosyayı bozuyor ve çoğu CORS proxy POST'u reddediyordu.
+- **Çözüm**: `uploadMediaToCloud` içinde catbox.moe ve litterbox.catbox.moe için önce direkt POST deneniyor, ardından allorigins ve corsproxy.io fallback'leri deneniyor. Her aşamada açıklayıcı log atılıyor; başarısız olunca bir sonraki servis deneniyor.
+- **Dosya adı**: `black.3.4.jsx` → `black.3.5.jsx`, `test_black.3.4.js` → `test_black.3.5.js`
+- **Test**: 173 → 184 test (11 yeni test eklendi), 184/184 PASS
+
 ## [black_3.4] — 2026-07-30
 
 ### Müzik Kalıcı Saklama Fix
