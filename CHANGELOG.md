@@ -2,6 +2,18 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.12] — 2026-07-30
+
+### İddia Analizi: İfşa Sahnesi Artık Adaletsizliğe Odaklanıyor
+- **Değişiklik**: İddia Analizi modundaki "Karşılaştırma/İfşa" sahnesi artık rakamlara değil, **adaletsizliğin kendisine** odaklanıyor.
+- **ADIM 3**: "KARŞI-ÖRNEK VE İFŞA KURALI" → "İFŞA VE ADALETSİZLİK KURALI" olarak yeniden yazıldı. Üç ana sorgu eklendi:
+  - **Seçici hedefleme**: Sadece muhalefet (CHP) belediyeleri mi evlerinden alınıyor? Aynı fiil iktidar belediyelerinde de var mı?
+  - **İtibar suikasti**: Tüm medyada (sosyal medya, gazete, TV) ifşa edilerek linç kampanyası yapılıyor mu?
+  - **Çifte standart**: İktidar ve muhalefet aynı eylemde bulunduğunda sadece muhalefet mi cezalandırılıyor?
+- **ADIM 4**: Senaryo yapısında "Karşılaştırma" → "Karşılaştırma/İfşa" olarak güncellendi. Senaryo artık adaletsizliği NET olarak söylemek zorunda. Rakamlar ikincil, adaletsizlik birincil.
+- **Dosya adı**: `black.3.11.jsx` → `black.3.12.jsx`, `test_black.3.11.js` → `test_black.3.12.js`.
+- **Test**: 244 → 261 test (17 yeni v3.12 adaletsizlik testi eklendi), 261/261 PASS.
+
 ## [black_3.11] — 2026-07-30
 
 ### Güzel Söz Modu: Çok Dilli Sahne Desteği (FR/DE/TR)
