@@ -2,6 +2,21 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.11] — 2026-07-30
+
+### Güzel Söz Modu: Çok Dilli Sahne Desteği (FR/DE/TR)
+- **Özellik**: Güzel Söz modunda her sahne artık farklı bir dilde yazılıp seslendiriliyor:
+  - **Sahne 1**: Fransızca (çeviri + Fransızca seslendirme)
+  - **Sahne 2**: Almanca (çeviri + Almanca seslendirme)
+  - **Sahne 3**: Türkçe (orijinal metin + Türkçe seslendirme)
+- **Çeviri**: `_translateQuoteMultilang` fonksiyonu eklendi — Gemini API ile sözü FR/DE/TR dillerine çevirir. Anlam ve duygu korunur, edebi üslup kullanılır.
+- **Senaryo**: `_buildGuzelSozScript` artık her sahneye farklı dilde `spokenText` ve `topText` atıyor. `_isMultilang`, `_multilangTexts`, `_multilangLabels` flag'leri eklendi.
+- **Ses Üretimi**: Asset generation aşamasında 3 sahnenin de sesi üretiliyor (önceden sadece `audio[0]` üretiliyordu).
+- **Render**: `renderGuzelSoz` çok dilli modda 3 sesi sırayla çalıyor, her sahneye doğru metni ve görseli gösteriyor. Dil etiketi (FR/DE/TR) sağ üst köşede gösteriliyor. `sceneBoundaries` ile her sahnenin frame sınırları hesaplanıyor.
+- **Geri Uyumluluk**: `_isMultilang` flag'i ile eski tek dilli davranış korunuyor.
+- **Dosya adı**: `black.3.10.jsx` → `black.3.11.jsx`, `test_black.3.10.js` → `test_black.3.11.js`.
+- **Test**: 224 → 244 test (20 yeni v3.11 çok dilli testi eklendi), 244/244 PASS.
+
 ## [black_3.10] — 2026-07-30
 
 ### İddia Analizi: Siyah Ekran Fix + Grafik Doğruluğu + Görsel Temizliği + Fade Geçiş
