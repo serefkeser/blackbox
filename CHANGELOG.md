@@ -4,6 +4,11 @@ Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutul
 
 ## [black_2.8] — 2026-07-30
 
+### Dosya Yeniden Adlandırma
+- `anti.1.0.jsx` → `anti.2.8.jsx` (dosya adı versiyonla eşleşti)
+- `test_anti.1.0.js` → `test_anti.2.8.js` (test dosyası da güncellendi)
+- Test dosyasındaki tüm `anti.1.0` referansları `anti.2.8` olarak güncellendi
+
 ### İddia Analizi Modülü Geliştirildi
 - **ECONOMIC_DATA**: Her veri alanına `baseline2002` property'si eklendi (aclikSiniri, yoksullukSiniri, asgariUcret, emekli maası, TÜFE, faiz, dolar, euro, altın, işsizlik)
 - **buildEconomicDataBlock()**: `[2002: X]` formatında baz yılı karşılaştırma gösterimi eklendi
