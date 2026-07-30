@@ -2,6 +2,18 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.9] — 2026-07-30
+
+### İddia Analizi: Raw Medya Ses Düzeltmesi + Süre Pre-Load
+- **Sorun**: black_3.8'de İddia Analizi raw playback sahnesinde yüklenen video/ses oynatılsa da, ses `audioDest`'e route edilmediği için final MP4'de SİLENT olarak çıkıyordu. Ayrıca `rawSlideSecs` 10.0s placeholder kullandığı için `scaleFactor` yanlış hesaplanıyor (0.57x gibi), diğer sahneler gereksiz sıkışıyordu.
+- **Çözüm**:
+  - **Ses Route**: Raw medya element'i artık `audioCtx.createMediaElementSource(rawEl)` → `rawGainNode` → `audioDest` + `audioCtx.destination` olarak bağlanıyor. Böylece orijinal ses hem MediaRecorder kaydına hem hoparlöre gidiyor. Render sonunda source/gain node'lar disconnect ediliyor (temizlik).
+  - **Tek Element**: Video ve audio için ayrı elementler (rawVideo + rawAudioEl) yerine tek `rawEl` kullanılıyor. `rawEl.muted = false` + `crossOrigin = 'anonymous'`.
+  - **Süre Pre-Load**: `rawSlideSecs` hesaplamasından önce raw medya async olarak pre-load ediliyor, gerçek `duration` alınıyor (`rawMediaDurations` objesinde saklanıyor). Placeholder 10.0s kaldırıldı. `scaleFactor` artık doğru hesaplanıyor.
+  - **Fallback**: `createMediaElementSource` başarısız olursa (CORS vb.), element direkt çalmaya devam ediyor (kayda gitmeyebilir ama hoparlörden çalar).
+- **Dosya adı**: `black.3.8.jsx` → `black.3.9.jsx`, `test_black.3.8.js` → `test_black.3.9.js`.
+- **Test**: 206 → 216 test (10 yeni v3.9 testi eklendi), 216/216 PASS.
+
 ## [black_3.8] — 2026-07-30
 
 ### İddia Analizi: Orijinal Medya Oynatımı + Karşı-Örnek İfşa Sistemi
