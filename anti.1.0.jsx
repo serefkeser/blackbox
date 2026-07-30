@@ -94,6 +94,14 @@
 //   - UI: Ayarlar bölümüne Buffer API Token input eklendi
 //   - Paylaşım log paneli: KOPYALA butonu + işlem bitse bile ekranda kalır
 //   - Tüm paylaşım aşamalarında [DEBUG] detaylı log
+//
+// black_2.8 (anti.1.0):
+//   - İddia Analizi prompt tamamen yeniden yazıldı: girdi analizi öncelikli
+//   - 2002 baz yılı karşılaştırması eklendi (ECONOMIC_DATA.baseline2002)
+//   - Dürüstlük kuralları: "BİLMEDİĞİN şey için ASLA uydurma"
+//   - Tekrarlayan ekonomi verisi bölümleri kaldırıldı (XXXXX placeholder yok)
+//   - Kaynaklar sahnesi güçlendirildi: kaynak adı + veri + URL birlikte
+//   - buildEconomicDataBlock: [2002:] formatında baz yılı gösterimi
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -163,8 +171,8 @@ try {
 // ── APP_VERSION: Tek kaynak versiyon yönetimi ──────────────────────────────
 const APP_VERSION = {
   major: 2,
-  minor: 7,
-  hotfix: 'H2.7',
+  minor: 8,
+  hotfix: 'H2.8',
   toString() { return `BLACKBOX black_${this.major}.${this.minor}`; },
   toBadge() { return `${this.toString()} • One-Page`; }
 };
@@ -200,42 +208,49 @@ const AI_CONFIG = {
 // gereken şey bu objedeki değerleri (ve dataAsOf tarihlerini) güncellemek;
 // sysPrompt bunları otomatik olarak doğru yerlere yerleştirir.
 const ECONOMIC_DATA = {
-  aclikSiniri: { value: '35.759 TL', note: 'dört kişilik aile, TÜRK-İŞ', dataAsOf: 'Haziran 2026' },
-  yoksullukSiniri: { value: '116.478 TL', note: 'dört kişilik aile, TÜRK-İŞ', dataAsOf: 'Haziran 2026' },
-  asgariUcret: { value: '28.075 TL', note: 'net', dataAsOf: 'Ocak 2026' },
-  enDusukEmekliMaasi: { value: '23.552 TL', note: '', dataAsOf: null },
-  tufeYillik: { value: '%32.11', note: 'TÜİK', dataAsOf: 'Haziran 2026' },
-  tufeAylik: { value: '%0.99', note: 'TÜİK', dataAsOf: 'Haziran 2026' },
-  tcmbYilSonuBeklenti: { value: '%29', note: '', dataAsOf: null },
-  tcmbPolitikaFaizi: { value: '%37', note: '', dataAsOf: null },
-  dolarTl: { value: '47.05', note: '', dataAsOf: '16 Temmuz 2026' },
-  euroTl: { value: '54.07', note: '', dataAsOf: '16 Temmuz 2026' },
-  gramAltin: { value: '6.222 TL', note: '', dataAsOf: '16 Temmuz 2026' },
-  ceyrekAltin: { value: '10.223 TL', note: '', dataAsOf: '16 Temmuz 2026' },
-  issizlik: { value: '%8.2', note: '', dataAsOf: null }
+  aclikSiniri: { value: '35.759 TL', baseline2002: '1.522 TL', note: 'dört kişilik aile, TÜRK-İŞ', dataAsOf: 'Haziran 2026' },
+  yoksullukSiniri: { value: '116.478 TL', baseline2002: '4.560 TL', note: 'dört kişilik aile, TÜRK-İŞ', dataAsOf: 'Haziran 2026' },
+  asgariUcret: { value: '28.075 TL', baseline2002: '184 TL', note: 'net', dataAsOf: 'Ocak 2026' },
+  enDusukEmekliMaasi: { value: '23.552 TL', baseline2002: '150 TL', note: '', dataAsOf: null },
+  tufeYillik: { value: '%32.11', baseline2002: '%29.7', note: 'TÜİK', dataAsOf: 'Haziran 2026' },
+  tufeAylik: { value: '%0.99', baseline2002: null, note: 'TÜİK', dataAsOf: 'Haziran 2026' },
+  tcmbYilSonuBeklenti: { value: '%29', baseline2002: '%35', note: '', dataAsOf: null },
+  tcmbPolitikaFaizi: { value: '%37', baseline2002: '%59', note: '', dataAsOf: null },
+  dolarTl: { value: '47.05', baseline2002: '1.35', note: '', dataAsOf: '16 Temmuz 2026' },
+  euroTl: { value: '54.07', baseline2002: '1.28', note: '', dataAsOf: '16 Temmuz 2026' },
+  gramAltin: { value: '6.222 TL', baseline2002: '15.5 TL', note: '', dataAsOf: '16 Temmuz 2026' },
+  ceyrekAltin: { value: '10.223 TL', baseline2002: '25 TL', note: '', dataAsOf: '16 Temmuz 2026' },
+  issizlik: { value: '%8.2', baseline2002: '%10.3', note: '', dataAsOf: null }
 };
 
 // ECONOMIC_DATA'yı sysPrompt içine gömülecek okunabilir bir bloğa çevirir.
 // Rakamlar burada TEK bir yerden geliyor; artık dev bir string'in içinde
-// aranıp bulunması gerekmiyor.
+// aranıp bulunması gerekmiyor. 2002 baz yılı karşılaştırması dahildir.
 const buildEconomicDataBlock = () => {
   const d = ECONOMIC_DATA;
   const withDate = (item) => item.dataAsOf ? `${item.note ? item.note + ' ' : ''}${item.dataAsOf}`.trim() : item.note;
-  return [
-    `- Aclik Siniri: ${d.aclikSiniri.value} (${withDate(d.aclikSiniri)})`,
-    `- Yoksulluk Siniri: ${d.yoksullukSiniri.value} (${withDate(d.yoksullukSiniri)})`,
-    `- Asgari Ucret: ${d.asgariUcret.value} (${withDate(d.asgariUcret)})`,
-    `- En Dusuk Emekli Maasi: ${d.enDusukEmekliMaasi.value}`,
-    `- TÜFE Yillik: ${d.tufeYillik.value} (${withDate(d.tufeYillik)})`,
-    `- TÜFE Aylik: ${d.tufeAylik.value} (${withDate(d.tufeAylik)})`,
-    `- TCMB Yil Sonu Beklenti: ${d.tcmbYilSonuBeklenti.value}`,
-    `- TCMB Politika Faizi: ${d.tcmbPolitikaFaizi.value}`,
-    `- Dolar/TL: ${d.dolarTl.value} (${d.dolarTl.dataAsOf})`,
-    `- Euro/TL: ${d.euroTl.value} (${d.euroTl.dataAsOf})`,
-    `- Gram Altin: ${d.gramAltin.value} (${d.gramAltin.dataAsOf})`,
-    `- Ceyrek Altin: ${d.ceyrekAltin.value} (${d.ceyrekAltin.dataAsOf})`,
-    `- Issizlik: ${d.issizlik.value}`
-  ].join('\\n');
+  const withBaseline = (item) => {
+    let line = `- ${item.label}: ${item.value}`;
+    if (item.dataAsOf) line += ` (${withDate(item)})`;
+    if (item.baseline2002) line += ` [2002: ${item.baseline2002}]`;
+    return line;
+  };
+  const items = [
+    { ...d.aclikSiniri, label: 'Açlık Sınırı' },
+    { ...d.yoksullukSiniri, label: 'Yoksulluk Sınırı' },
+    { ...d.asgariUcret, label: 'Asgari Ücret' },
+    { ...d.enDusukEmekliMaasi, label: 'En Düşük Emekli Maaşı' },
+    { ...d.tufeYillik, label: 'TÜFE Yıllık' },
+    { ...d.tufeAylik, label: 'TÜFE Aylık' },
+    { ...d.tcmbYilSonuBeklenti, label: 'TCMB Yıl Sonu Beklenti' },
+    { ...d.tcmbPolitikaFaizi, label: 'TCMB Politika Faizi' },
+    { ...d.dolarTl, label: 'Dolar/TL' },
+    { ...d.euroTl, label: 'Euro/TL' },
+    { ...d.gramAltin, label: 'Gram Altın' },
+    { ...d.ceyrekAltin, label: 'Çeyrek Altın' },
+    { ...d.issizlik, label: 'İşsizlik' }
+  ];
+  return items.map(withBaseline).join('\\n');
 };
 
 // ── ERROR_PATTERNS: OCR hata mesajı regex'leri (tek kaynak) ────────────────
@@ -1103,14 +1118,6 @@ class LogicEngineService {
     return errors;
   }
 
-  static getEconomyDataPrompt() {
-    return 'ZORUNLU EKONOMI VERILERI:\n' +
-    'T\u00DCFE, TCMB Beklentisi, Politika Faizi, A\u00E7l\u0131k S\u0131n\u0131r\u0131, Yoksulluk S\u0131n\u0131r\u0131, ' +
-    'Asgari \u00DCcret, Emekli Maa\u015F\u0131, Memur Maa\u015F\u0131, \u0130\u015F\u00E7i Maa\u015F\u0131, ' +
-    'Dolar/TL, Euro/TL, Gram Alt\u0131n, \u00C7eyrek Alt\u0131n, \u0130\u015Fsizlik, B\u00FCy\u00FCme\n' +
-    'KURALLAR: T\u00FCrk\u00E7e karakter, TL para birimi, 85.450 TL say\u0131 bi\u00E7imi, kaynak belirt\n';
-  }
-
   static async analyzeContent(inputData, inputType, config) {
     addSystemLog('İçerik analiz ediliyor...', 'info');
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${AI_CONFIG.GEMINI_MODEL}:generateContent?key=${apiKey}`;
@@ -1544,11 +1551,11 @@ Dönüş ZORUNLU olarak JSON formatında olmalı.`;
       parts = [{ text: 'Bu URL icindeki icerigi oku. Dogrulanabilir iddialari cikar: ' + inputData }];
     }
 
-    // v2.4: Rakamlar artik ECONOMIC_DATA'dan geliyor (tek kaynak), string-replace
-    // hack'i kaldirildi. Tarih placeholder'lari gercekten dinamik.
+    // v2.8: Prompt tamamen yeniden yazıldı — girdi analizi öncelikli,
+    // 2002 baz yılı karşılaştırması, dürüstlük kuralı, tekrar kaldırıldı.
     const _curMonthYear = _getCurrentMonthYearTR();
     const _curDate = _getCurrentDateTR();
-    const sysPrompt = `Sen bir fact-check ve ekonomi analiz uzmanisin. ASAGIDAKI GUNCEL VERILERI MUTLAKA KULLAN (${_curMonthYear}):\n\nGUNCEL EKONOMI VERILERI (${_curMonthYear}):\n${buildEconomicDataBlock()}\n\nNOT: Bu veriler TÜRK-İŞ ve TÜİK resmi verileridir. Video iceriginde MUTLAKA bu rakamlari net olarak goster. Rakamlar buyuk puntolarla yazilsin, arka plandaki goruntunun ustunde net gorunsun. Tarih belirt: ${_curMonthYear}.\n\nKURALLAR:\n1. Rakamlar NET ve BUYUK yazilacak (arka planda net gorunecek)\n2. TL olarak yaz (dolar degil)\n3. Tarih belirt: ${_curMonthYear}\n4. Kaynak belirt: TÜRK-İŞ, TÜIK\n5. Grafik varsa goster\n6. Google Search ile guncel veri bulabilirsin\n\n Gorev:\n\n1. Icerikteki DOGRULANABILIR cumleleri cikar (yorum, hakaret, kisisel gorus HARIC).\n2. Her iddiayi ayri kart yap.\n3. Her iddiayi bagimsiz analiz et.\n4. Resmi kaynaklarla karsilastir.\n5. Degerlendirme etiketi ver: Dogru, Kisman Dogru, Eksik Baglam, Yanlis, Dogrulanamiyor.\n6. Guven skoru hesapla (0-100).\n7. Kanitlari listele (kaynak + URL + veri + TARIH).\n8. Video senaryosu olustur: Hook(5sn) -> Iddia -> Aciklama -> Kanitlar -> Sonuc -> Kapanis.\n9. Kalite kontrol yap.\n\nZORUNLU EKONOMI VERILERI (video iceriginde MUTLAKA yazilacak):\n- Enflasyon: Guncel TÜFE (yillik %), aylik %, TARIHI ile birlikte\n- TCMB Yil Sonu Enflasyon Beklentisi: % kac, gerceklesen: % kac\n- Politika Faizi: % kac\n- Acik Siniri: XXXXX TL (TARIHI: ${_curMonthYear} gibi, TÜRK-İŞ)\n- Yoksulluk Siniri: XXXXX TL (TARIHI ile)\n- Acik Siniri altinda kac kisi: X milyon\n- Yoksulluk siniri altinda kac kisi: X milyon\n- Asgari Ucret: XXXXX TL (net)\n- En Dusuk Emekli Maasi: XXXXX TL\n- Ortalama Memur Maasi: XXXXX TL\n- Ortalama Isci Maasi: XXXXX TL\n- Dolar/TL: XX.XX TL\n- Euro/TL: XX.XX TL\n- Gram Altin: XXXXX TL\n- Ceyrek Altin: XXXXX TL\n- Issizlik Orani: % X.X\n- Buyume (GDP): % X.X\n- Gini Katsayisi: 0.XXX\n\nKURALLAR:\n1. Tum rakamlar NET TL olarak yazilacak (orn: 26.500 TL, $ degil)\n2. Tarih belirtilecek (orn: TÜİK ${_curMonthYear} verilerine gore...)\n3. Eski veri kullanma, en guncel veriyi bul (en fazla 1-2 ay onceki)\n4. Enflasyon icin hem gerceklesen hem beklenti yaz\n5. Aclik/yoksulluk siniri MUTLAKA TL olarak ve tarihle birlikte yaz\n6. Kac kisi acik/yoksulluk siniri altinda MUTLAKA yaz\n7. Sayi bicimi: 26.500 TL (nokta binlik ayrac)\n8. Grafik varsa goster (enflasyon trendi, dolar kuru degisimi vb)\n9. Kaynak belirt: TÜİK, TCMB, TÜRK-İŞ, OECD\n\nHer sahne NOKTA ile biten cumle olmali. Donus ZORUNLU JSON.`;
+    const sysPrompt = `Sen bir fact-check ve doğrulama uzmanısın. Görevin verilen içeriği analiz etmek, doğrulanabilir iddiaları çıkarmak ve Türkiye'deki resmi verilerle karşılaştırmaktır.\n\n═══════════════════════════════════════════════════════════\nADIM 1 — GİRDİYİ ANALİZ ET\n═══════════════════════════════════════════════════════════\nÖnce içeriği dikkatlice incele. Konuyu belirle: ekonomi, sağlık, politika, bilim, tarih, sosyal vb.\nİçerikte DOĞRULANABİLİR iddiaları çıkar (yorum, hakaret, kişisel görüş HARİÇ).\nHer iddiayı bağımsız olarak analiz et.\n\n═══════════════════════════════════════════════════════════\nADIM 2 — KONU EKONOMİ İSE: GÜNCEL VERİLER (${_curMonthYear})\n═══════════════════════════════════════════════════════════\nAşağıdaki veriler TÜRK-İŞ ve TÜİK resmi verileridir. Köşeli parantez içindeki [2002:] değerleri baz yılını gösterir. Ekonomi ile ilgili iddialarda MUTLAKA bu verileri kullan ve karşılaştır:\n\n${buildEconomicDataBlock()}\n\n2002 BAZ YILI KARŞILAŞTIRMA KURALI:\n- Konu ekonomi ise, her ilgili veriyi 2002 yılı ile karşılaştır: "2002'de X idi, ${_curMonthYear} itibarıyla Y oldu."\n- Değişimi net olarak belirt (örn: "23 kata çıktı", "%1800 arttı").\n- Kaynak belirt: TÜİK, TÜRK-İŞ, TCMB.\n- Google Search ile ek güncel veri bulabilirsin ama yukarıdaki resmi verileri BAZ AL.\n\n═══════════════════════════════════════════════════════════\nADIM 3 — DOĞRULAMA VE DEĞERLENDİRME\n═══════════════════════════════════════════════════════════\nHer iddia için:\n1. Durum etiketi ver: Doğru, Kısmen Doğru, Eksik Bağlam, Yanlış, Doğrulanamıyor.\n2. Güven skoru hesapla (0-100).\n3. Analiz yaz: iddia ne diyor, resmi veri ne diyor, aradaki fark nedir?\n4. Kanıtları listele — her kanıt için ZORUNLU alanlar:\n   - kaynak: Resmi kurum adı (TÜİK, TÜRK-İŞ, TCMB, OECD, DİSK vb.)\n   - url: Kaynağın URL'i (mümkünse doğrudan veri sayfası)\n   - veri: İlgili veri ve tarihi (örn: "TÜFE yıllık %32.11, Haziran 2026")\n5. Sonuç yaz: kısa, net özet.\n\n═══════════════════════════════════════════════════════════\nDÜRÜSTLÜK KURALLARI (ASLA İHLAL ETME)\n═══════════════════════════════════════════════════════════\n1. BİLMEDİĞİN bir şey için "Doğrulanamıyor" de. ASLA uydurma.\n2. Resmi kaynaktan teyit edilemeyen iddialar için "Doğrulanamıyor" kullan.\n3. Veriyi bulamadıysan "bu veriye ulaşamadım" de — boş kalemeyi doldurma.\n4. Her rakamın arkasında MUTLAKA resmi kaynak olmalı. Blog, haber sitesi, sosyal medya KAYNAK DEĞİLDİR.\n5. Tarih MUTLAKA belirt: hangi ay ve yılın verisi olduğunu yaz.\n6. Sayı biçimi: 26.500 TL (nokta binlik ayracı, TL olarak).\n\n═══════════════════════════════════════════════════════════\nADIM 4 — VİDEO SENARYOSU\n═══════════════════════════════════════════════════════════\nHer iddia için video senaryosu oluştur:\n- Hook (5sn): Dikkat çekici açılış\n- İddia: Ne iddia ediliyor\n- Açıklama: Bağlam ve detay\n- Kanıtlar: Resmi veriler ve kaynaklar (ekonomi ise 2002 karşılaştırması dahil)\n- Sonuç: Net değerlendirme\n- Kapanış: Özet\n\nHer sahne NOKTA ile biten cümle olmalı. Rakamlar NET ve BÜYÜK yazılmalı.\nKonu ekonomi ise rakamları TL olarak yaz ($ değil). Tarih belirt: ${_curMonthYear}.\n\nDönüş ZORUNLU JSON.`;
 
     const payload = {
       contents: [{ role: 'user', parts: parts }],
@@ -3492,25 +3499,33 @@ class MediaSynthesisService {
                         addSystemLog('Kaynaklar sahnesi eklendi.', 'success');
                       }
 
-                      // Kaynaklar sahnesi (Son Söz'den önce)
+                      // Kaynaklar sahnesi (Son Söz'den önce) — iddia analizi modu
                       if (this.state.script && this.state.script.iddialar && this.state.script.iddialar.length > 0) {
                         const allKaynaklar = [];
+                        const kaynakSet = new Set();
                         this.state.script.iddialar.forEach(function(iddia) {
                             if (iddia.kanitlar) {
                               iddia.kanitlar.forEach(function(k) {
-                                  if (k.kaynak && allKaynaklar.indexOf(k.kaynak) === -1) {
-                                    allKaynaklar.push(k.kaynak);
+                                  const key = (k.kaynak || '') + '|' + (k.veri || '');
+                                  if (k.kaynak && !kaynakSet.has(key)) {
+                                    kaynakSet.add(key);
+                                    allKaynaklar.push({ kaynak: k.kaynak, veri: k.veri || '', url: k.url || '' });
                                   }
                                 });
                             }
                           });
                         if (allKaynaklar.length > 0) {
-                          const kaynaklarSpoken = "Kaynaklar ve referanslar. " + allKaynaklar.join(". ") + ".";
+                          const kaynaklarSpoken = "Kaynaklar ve referanslar. " + allKaynaklar.map(function(k) {
+                            let s = k.kaynak;
+                            if (k.veri) s += ": " + k.veri;
+                            return s;
+                          }).join(". ") + ".";
+                          const kaynaklarTopText = allKaynaklar.length > 5 ? 'KAYNAKLAR VE REFERANSLAR' : 'KAYNAKLAR';
                           this.state.script.imageBlocks.push({
                               imageIndex: 0, imageType: 'ai', customImage: null,
-                              videoSlides: [{ topText: 'KAYNAKLAR', spokenText: kaynaklarSpoken, imagePrompts: ['A clean list of official sources and references on dark background, professional infographic style'] }]
+                              videoSlides: [{ topText: kaynaklarTopText, spokenText: kaynaklarSpoken, imagePrompts: ['Professional infographic showing official government sources and data references on dark background, clean typography, TÜİK TÜRK-İŞ TCMB logos style'], _isKaynaklar: true, _kaynaklar: allKaynaklar }]
                             });
-                          addSystemLog('Kaynaklar sahnesi eklendi: ' + allKaynaklar.length + ' kaynak.', 'success');
+                          addSystemLog('Kaynaklar sahnesi eklendi: ' + allKaynaklar.length + ' kaynak (veri+URL dahil).', 'success');
                         }
                       }
 
@@ -5704,5 +5719,5 @@ class ErrorBoundary extends React.Component {
             }
 
 
-// OTONOM black_2.7 — Gemini Canvas uyumlu versiyon
+// OTONOM black_2.8 — Gemini Canvas uyumlu versiyon
 // Tüm fonksiyonlar tek dosyada, kopyala-yapıştır ile Canvas'ta çalışır.

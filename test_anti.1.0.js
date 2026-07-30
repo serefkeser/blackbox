@@ -34,10 +34,10 @@ t('GROQ_API_KEY empty', gq && gq[1] === '', gq ? `"${gq[1].slice(0,15)}"` : 'not
 t('No nvapi- key', !/nvapi-[A-Za-z0-9_-]{20,}/.test(src));
 t('No gsk_ key', !/gsk_[A-Za-z0-9]{20,}/.test(src));
 
-// 3. APP_VERSION (updated to 2.4)
+// 3. APP_VERSION (updated to 2.8)
 t('APP_VERSION major=2', /APP_VERSION\s*=\s*\{[\s\S]*?major:\s*2[,\s]/.test(src));
-t('APP_VERSION minor=7', /APP_VERSION\s*=\s*\{[\s\S]*?minor:\s*7[,\s]/.test(src));
-t('APP_VERSION hotfix=H2.7', /hotfix:\s*['"]H2\.7['"]/.test(src));
+t('APP_VERSION minor=8', /APP_VERSION\s*=\s*\{[\s\S]*?minor:\s*8[,\s]/.test(src));
+t('APP_VERSION hotfix=H2.8', /hotfix:\s*['"]H2\.8['"]/.test(src));
 
 // 4. exportWorkflowLog uses APP_VERSION.toString()
 const exLog = src.match(/exportWorkflowLog[\s\S]{0,2000}/);
@@ -177,8 +177,8 @@ t('No hardcoded otonom_proxy_secret (except constant def)', hardcodedTokenLines.
 t('No hardcoded 2026/7/28 in static_gzt URLs', !/2026\/7\/28/.test(src));
 
 // 29. Version history
-t('Version history has black_2.7', /black_2\.7\s*\(anti\.1\.0\)/.test(src));
-t('Last line says black_2.7', /OTONOM black_2\.7/.test(src));
+t('Version history has black_2.8', /black_2\.8\s*\(anti\.1\.0\)/.test(src));
+t('Last line says black_2.8', /OTONOM black_2\.8/.test(src));
 
 // 30. Music search + preview
 t('Music search query state', /musicSearchQuery/.test(src));
@@ -218,9 +218,34 @@ t('Buffer token UI input', /BUFFER_API_KEY.*onChange.*SafeStorage\.setItem/.test
 t('cors.eu.org proxy', /cors\.eu\.org/.test(src));
 t('corsproxy.io URL encoded', /corsproxy\.io\/\?url=.*encodeURIComponent/.test(src));
 
+// 38. İddia Analizi prompt geliştirme (black_2.8)
+t('ECONOMIC_DATA has baseline2002', /baseline2002:\s*['"]/.test(src));
+t('ECONOMIC_DATA baseline2002 for aclikSiniri', /aclikSiniri:\s*\{[^}]*baseline2002:\s*['"]/.test(src));
+t('ECONOMIC_DATA baseline2002 for asgariUcret', /asgariUcret:\s*\{[^}]*baseline2002:\s*['"]/.test(src));
+t('ECONOMIC_DATA baseline2002 for dolarTl', /dolarTl:\s*\{[^}]*baseline2002:\s*['"]/.test(src));
+t('buildEconomicDataBlock has withBaseline', /withBaseline/.test(src));
+t('buildEconomicDataBlock has [2002:] format', /\[2002:\s*\$\{item\.baseline2002\}\]/.test(src));
+t('Prompt has ADIM 1 GİRDİYİ ANALİZ ET', /ADIM 1.*GİRDİYİ ANALİZ ET/.test(src));
+t('Prompt has ADIM 2 KONU EKONOMİ', /ADIM 2.*KONU EKONOMİ/.test(src));
+t('Prompt has ADIM 3 DOĞRULAMA', /ADIM 3.*DOĞRULAMA/.test(src));
+t('Prompt has ADIM 4 VİDEO SENARYOSU', /ADIM 4.*VİDEO SENARYOSU/.test(src));
+t('Prompt has 2002 BAZ YILI KARŞILAŞTIRMA', /2002 BAZ YILI KARŞILAŞTIRMA/.test(src));
+t('Prompt has DÜRÜSTLÜK KURALLARI', /DÜRÜSTLÜK KURALLARI/.test(src));
+t('Prompt has BİLMEDİĞİN', /BİLMEDİĞİN/.test(src));
+t('Prompt has ASLA uydurma', /ASLA uydurma/.test(src));
+t('Prompt has Doğrulanamıyor', /Doğrulanamıyor/.test(src));
+t('Prompt has KAYNAK DEĞİLDİR', /KAYNAK DEĞİLDİR/.test(src));
+t('Prompt no XXXXX placeholder', !/XXXXX\s*TL/.test(src));
+t('Prompt no ZORUNLU EKONOMI VERILERI section', !/ZORUNLU EKONOMI VERILERI/.test(src));
+t('Kaynaklar sahnesi has _kaynaklar with veri', /_kaynaklar:\s*allKaynaklar/.test(src));
+t('Kaynaklar sahnesi has k.veri', /k\.veri/.test(src));
+t('Kaynaklar sahnesi has k.url', /k\.url/.test(src));
+t('Kaynaklar sahnesi has kaynakSet dedup', /kaynakSet/.test(src));
+t('Kaynaklar sahnesi has KAYNAKLAR VE REFERANSLAR', /KAYNAKLAR VE REFERANSLAR/.test(src));
+
 // ═══ RESULTS ═══
 console.log('═══════════════════════════════════════════════════════════════');
-console.log(`  anti.1.0.jsx (black_2.7) TEST RESULTS: ${pass} PASS / ${fail} FAIL / ${pass+fail} TOTAL`);
+console.log(`  anti.1.0.jsx (black_2.8) TEST RESULTS: ${pass} PASS / ${fail} FAIL / ${pass+fail} TOTAL`);
 console.log('═══════════════════════════════════════════════════════════════');
 out.forEach(r => console.log(`  ${r}`));
 console.log('═══════════════════════════════════════════════════════════════');
@@ -228,6 +253,6 @@ if (fail > 0) {
   console.log(`  ❌ ${fail} TEST(LER) BAŞARISIZ — DÜZELTME GEREKİYOR`);
   process.exit(1);
 } else {
-  console.log(`  ✅ TÜM TESTLER BAŞARILI — anti.1.0.jsx (black_2.7) ONAYLANDI`);
+  console.log(`  ✅ TÜM TESTLER BAŞARILI — anti.1.0.jsx (black_2.8) ONAYLANDI`);
   process.exit(0);
 }
