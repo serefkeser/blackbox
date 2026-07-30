@@ -2,6 +2,45 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.13] — 2026-07-30
+
+### İddia Analizi: 5 Render Düzeltmesi (Audio Bleed + Altyazı + Grafik + Split-Screen + Watermark)
+
+#### 1. [KRİTİK] Audio Bleed Fix — Outro'da Ses Sızıntısı
+- **Sorun**: `playAudio` `AudioBufferSourceNode` başlatıyordu ama source node'u geri döndürmüyordu. `renderScene` görsel süre dolduğunda (`scaleFactor < 1` durumunda) ses hala çalmaya devam ediyordu → ses sonraki sahneye (outro'ya) sızıyordu.
+- **Çözüm**:
+  - `playAudio` artık `sourceNode` döndürüyor.
+  - `renderScene`'de `audioEnded` flag eklendi — `audioEndPromise` resolve olduğunda `true` olur.
+  - Frame loop bittiğinde `!audioEnded` ise `sourceNode.stop()` ile hard-cut yapılır.
+  - `renderSonSozScene`'de de sonSoz ve yorum sourceNode'ları için hard-cut eklendi.
+
+#### 2. [KRİTİK] Altyazı Senkronizasyonu — Kelime Bölünmesi
+- **Sorun**: `calculateSubtitles` `wordsPerSub = 2` kullanıyordu → tek kelimelik "Adalet." veya "standarttır." gibi havada kalan altyazılar beliriyordu.
+- **Çözüm**:
+  - `wordsPerSub` 2 → 4 yapıldı (en az 3-4 kelimelik mantıksal gruplar).
+  - Altyazı `endSec` overlap 0.1 → 0.15 sn'ye çıkarıldı (daha akıcı geçiş).
+
+#### 3. [ORTA] AI Grafik Metin Bozulması (Artifact)
+- **Sorun**: AI görsel üretirken sayıları/etiketleri bozuk yazıyordu (örn: "371" üst üste binmiş).
+- **Çözüm**:
+  - `drawChartOverlay` fonksiyonu eklendi — `chartData.show` true ise canvas'a temiz bar chart çizilir (AI görseldeki bozuk sayılar yerine).
+  - Bar'lar, değer etiketleri (üstte), kategori etiketleri (altta), başlık ve not gösterilir.
+  - `generateImage` prompt'una "no numbers, no digits" eklendi.
+  - Prompt'taki GRAFİK KURALI güncellendi: "görselin içine sayı yazma, canvas overlay olarak eklenecektir."
+
+#### 4. [ORTA] Split-Screen Odak Dağınıklığı
+- **Sorun**: Raw video `drawImageContain` ile çiziliyordu → letterbox (siyah çubuklar) → split-screen etkisi. Audio-only raw medyada thumbnail görseli arka planda görünüyordu.
+- **Çözüm**:
+  - Raw video artık `drawImageCover` ile tam ekran (crop, no letterbox).
+  - Audio-only raw medyada thumbnail yerine temiz koyu arka plan (`#0B0F19`).
+
+#### 5. [DÜŞÜK] Watermark Overlay
+- **Sorun**: Üçüncü taraf ham videolarındaki filigranlar (örn: `@dilsizmuhalif`) içeriğin özgünlük algısını azaltıyordu.
+- **Çözüm**: Raw video oynatımında üst %6 ve alt %6 bant ile filigranlar gizleniyor.
+
+- **Dosya adı**: `black.3.12.jsx` → `black.3.13.jsx`, `test_black.3.12.js` → `test_black.3.13.js`.
+- **Test**: 261 → 288 test (27 yeni v3.13 testi eklendi), 288/288 PASS.
+
 ## [black_3.12] — 2026-07-30
 
 ### İddia Analizi: İfşa Sahnesi Artık Adaletsizliğe Odaklanıyor
