@@ -2,6 +2,22 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.10] — 2026-07-30
+
+### İddia Analizi: Siyah Ekran Fix + Grafik Doğruluğu + Görsel Temizliği + Fade Geçiş
+- **Sorun 1 [KRİTİK]**: Raw video oynatımında ekranda 35 saniye boyunca siyah ekran görünüyordu. `drawImageContain` fonksiyonu `img.width / img.height` kullanıyordu — `<video>` elementinde bu değerler 0 (DOM'a eklenmemiş) → `imgRatio = 0/0 = NaN` → `drawImage` hiç çizilmiyordu.
+  - **Çözüm**: `drawImageContain` ve `drawImageCover` artık `img.videoWidth || img.naturalWidth || img.width` kullanıyor. Boyut 0 ise erken return.
+- **Sorun 2 [KRİTİK]**: Raw video'da seeking (`rawEl.currentTime = elapsedSec`) frame atlamalarına ve takılmalarına neden oluyordu.
+  - **Çözüm**: Seeking kaldırıldı — video doğal oynatılıyor, her frame'de mevcut frame çiziliyor.
+- **Sorun 3 [KRİTİK]**: AI grafik üretirken sayıları/etiketleri yanlış koyuyordu (örn: 371 sayısı AK Parti etiketiyle).
+  - **Çözüm**: Prompt'a GRAFİK/İNFOGRAFİK KURALI eklendi: `imagePrompts` içinde TAM sayıları ve etiketleri yaz zorunluluğu (örn: "Bar chart showing AK Parti 677 (tallest), CHP 371 (medium), MHP 128 (shortest)").
+- **Sorun 4 [ORTA]**: AI görsellerde anlamsız metinler ("OFFICIAL INVEŞTIEŞTİLWI") çıkıyordu.
+  - **Çözüm**: `generateImage` prompt'una "no text, no words, no letters, no labels, clean visual" eklendi. Prompt'a GÖRSEL YAZI KURALI eklendi.
+- **Sorun 5 [DÜŞÜK]**: Son sahneden outro'ya sert kesme (hard cut) ile geçiliyordu.
+  - **Çözüm**: Outro öncesi 0.5sn (15 frame) fade-to-black efekti eklendi.
+- **Dosya adı**: `black.3.9.jsx` → `black.3.10.jsx`, `test_black.3.9.js` → `test_black.3.10.js`.
+- **Test**: 216 → 224 test (8 yeni v3.10 testi eklendi), 224/224 PASS.
+
 ## [black_3.9] — 2026-07-30
 
 ### İddia Analizi: Raw Medya Ses Düzeltmesi + Süre Pre-Load
