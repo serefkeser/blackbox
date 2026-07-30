@@ -2,6 +2,16 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.2] — 2026-07-30
+
+### TTS Hızı + Müzik Seçimi + catbox CORS Fix
+- **TTS hızı normal konuşma hızına getirildi**: `SPEECH_RATE: 1.25` → `1.0` — ne az ne çok, normal hız
+- **Müzik seçimi gazete okuma modunda da çalışıyor**: `matchMusicToEmotion` + `_bgmId` ataması `if/else` bloğunun dışına taşındı. Önceki: sadece normal modda müzik seçiliyordu, gazete modunda "Render BGM: none" hatası veriyordu. Artık her iki modda da müzik otomatik seçiliyor.
+- **catbox.moe CORS engeli fix**: Direkt `fetch('https://catbox.moe/user/api.php')` CORS engeline takılıyordu. Artık `uploadMediaToCloud` fonksiyonu kullanılıyor (tmpfiles.org → Python bridge → litterbox.catbox.moe → file.io failover zinciri)
+- **Bulut yedek mesajı düzeltildi**: "Bulut yedek başarısız" → "Bulut yedek atlandı (IndexedDB'de mevcut, CORS engeli olabilir)" — daha doğru ve kullanıcıyı yanıltmayan mesaj
+- **Dosya adı**: `black.3.1.jsx` → `black.3.2.jsx`, `test_black.3.1.js` → `test_black.3.2.js`
+- **Test**: 159 → 164 test (5 yeni test eklendi), 164/164 PASS
+
 ## [black_3.1] — 2026-07-30
 
 ### İddia Analizi Prompt'u Genel Yapılandırıldı
