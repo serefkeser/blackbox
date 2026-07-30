@@ -2,6 +2,25 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.1] — 2026-07-30
+
+### İddia Analizi Prompt'u Genel Yapılandırıldı
+- **Sorun**: İddia Analizi prompt'u sadece ekonomi odaklıydı. Belediye soruşturması, siyaset, hukuk gibi konularda AI neyi nasıl doğrulayacağını bilmiyordu. "KONU EKONOMİ DEĞİLSE: kullanma" diyordu ama ne yapacağını söylemiyordu.
+- **Çözüm**: Prompt genel yapılandırıldı — TÜM konularda (siyaset, hukuk, belediye, sağlık, eğitim, güvenlik, dış politika, bilim) doğrulama yapacak şekilde yeniden yazıldı.
+- **ADIM 2 yeniden yazıldı**: "KONU EKONOMİ İSE" → "KONUYA GÖRE VERİ KAYNAKLARI VE DOĞRULAMA". Konu türüne göre kaynak rehberi eklendi:
+  - Siyaset/Belediye/Hukuk: İçişleri Bakanlığı, Adalet Bakanlığı, Yargıtay, Danıştay, Sayıştay, HSK, Anayasa Mahkemesi, resmigazete.gov.tr
+  - Sağlık: Sağlık Bakanlığı, TÜİK, WHO, ECDC
+  - Eğitim: MEB, YÖK, ÖSYM
+  - Güvenlik/Terör: İçişleri Bakanlığı, Emniyet, Jandarma
+  - Dış Politika: Dışişleri Bakanlığı
+  - Bilim: TÜBİTAK
+- **ADIM 3 güçlendirildi**: "İDDİA NE DİYOR vs GERÇEKTE NE VAR" karşılaştırma formatı. Google Search aktif kullanım vurgusu. Örnekler eklendi (belediye soruşturması, evden gözaltı).
+- **ADIM 4 yeniden yapılandırıldı**: Senaryo yapısı değişti — Hook → İddia → Gerçek → Karşılaştırma → Kanıtlar → Sonuç → Kapanış. Amaç: "İnsanlar konuşmacının iddiasına körü körüne inanmamalı, gerçekte ne olduğunu kaynaklarla görmelidir."
+- **Dürüstlük kurallarına eklendi**: TARAFSIZ OL (iktidar da muhalefet de aynı standart), KAYNAK ÇEŞİTLİLİĞİ (en az 2 kaynak)
+- **Konu-dışı ekonomi yasağı korundu**: Ekonomi dışı konulara hala asgari ücret/açlık sınırı enjekte edilmiyor
+- **Dosya adı**: `black.3.0.jsx` → `black.3.1.jsx`, `test_black.3.0.js` → `test_black.3.1.js`
+- **Test**: 132 → 159 test (27 yeni test eklendi), 159/159 PASS
+
 ## [black_3.0] — 2026-07-30
 
 ### Müzik Kalıcı Saklama Çözümü
