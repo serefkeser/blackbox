@@ -562,7 +562,34 @@ class LinkedInHandler(BaseHTTPRequestHandler):
             filename = media_file.get("filename", "video.mp4")
             data = media_file.get("data", b"")
 
+            # v3.6: Server-side catbox/litterbox upload avoids browser CORS limits.
+            # Catbox first (permanent), then litterbox (72h), then temp.sh/tmpfiles fallbacks.
+            catbox_attempts = [
+                ("https://catbox.moe/user/api.php", "catbox.moe"),
+                ("https://litterbox.catbox.moe/resources/internals/api.php", "litterbox.catbox.moe (72h)")
+            ]
+            for cat_url, provider_label in catbox_attempts:
+                try:
+                    print(f"[CLOUD UPLOAD] Trying {provider_label} server-side...")
+                    mfd = {
+                        "reqtype": (None, "fileupload"),
+                        "fileToUpload": (filename, data)
+                    }
+                    if provider_label.startswith("litterbox"):
+                        mfd["time"] = (None, "72h")
+                    r_cat = requests.post(cat_url, files=mfd, timeout=60)
+                    print(f"[CLOUD UPLOAD] {provider_label} HTTP {r_cat.status_code}")
+                    if r_cat.status_code == 200:
+                        pub_url = r_cat.text.strip()
+                        if pub_url.startswith("http"):
+                            print(f"[CLOUD UPLOAD] ✓ Success {provider_label}: {pub_url}")
+                            self.send_json(200, {"success": True, "url": pub_url, "provider": provider_label})
+                            return
+                except Exception as e:
+                    print(f"[CLOUD UPLOAD WARN] {provider_label} failed: {e}")
+
             try:
+                print("[CLOUD UPLOAD] Trying temp.sh fallback...")
                 r1 = requests.post("https://temp.sh/upload", files={"file": (filename, data)}, timeout=30)
                 if r1.status_code == 200:
                     pub_url = r1.text.strip()
@@ -573,6 +600,7 @@ class LinkedInHandler(BaseHTTPRequestHandler):
                 print(f"[CLOUD UPLOAD WARN] temp.sh failed: {e}")
 
             try:
+                print("[CLOUD UPLOAD] Trying tmpfiles.org fallback...")
                 r2 = requests.post("https://tmpfiles.org/api/v1/upload", files={"file": (filename, data)}, timeout=30)
                 if r2.status_code == 200:
                     j2 = r2.json()

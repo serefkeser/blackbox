@@ -2,6 +2,17 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.6] — 2026-07-30
+
+### Catbox CORS Sorunu Kalıcı Çözüm: Python Proxy Sunucu
+- **Sorun**: `uploadMediaToCloud` frontend'den catbox.moe/litterbox.catbox.moe'ye FormData POST gönderiyordu. Tarayıcı CORS politikası ve public CORS proxy'lerinin POST body'sini güvenilir şekilde iletememesi nedeniyle catbox yüklemeleri çoğu modern origin'de başarısız oluyordu. Sonuçta video/müzik kalıcı depolamaya gitmiyor, sadece geçici tmpfiles.org yedeğiyle yetiniliyordu.
+- **Çözüm**: Yerel Python sunucusu (`linkedin_server.py`, `http://localhost:3000`) artık upload'u server-side hallediyor. Frontend `uploadMediaToCloud` ilk deneme olarak localhost `/upload_cloud_media` endpoint'ine gönderiyor. Sunucu tarafında catbox.moe (kalıcı) → litterbox.catbox.moe (72 saat) → temp.sh → tmpfiles.org sıralamasıyla yüklemeler yapılıyor. CORS tamamen ortadan kalkıyor çünkü tarayıcı değil, sunucu catbox'a POST atıyor.
+- **Frontend değişiklikleri**: `uploadMediaToCloud` içinde localhost Python proxy denemesi en başa alındı. Eğer sunucu kapalıysa veya başarısız olursa eski catbox direkt + allorigins + corsproxy.io fallback'leri ve tmpfiles/file.io/litterbox direkt yedekleri korundu.
+- **Backend değişiklikleri**: `linkedin_server.py` içinde `/upload_cloud_media` endpoint'i yeniden yapılandırıldı. Gelen dosyayı önce catbox.moe'ye, sonra litterbox.catbox.moe'ye server-side yüklemeye çalışıyor; ikisi de başarısız olursa temp.sh ve tmpfiles.org fallback'lerine dönüyor. Yanıt `{success: true, url, provider}` formatında dönüyor.
+- **Güvenlik**: Python sunucusu zaten `verify_auth()` ile `X-Local-Proxy-Auth`, allowed origin veya 127.0.0.1/localhost kontrolü yapıyor. SSRF koruması `is_safe_proxy_url()` ile mevcut; bu endpoint'te catbox'a giden POST harici URL yok.
+- **Dosya adı**: `black.3.5.jsx` → `black.3.6.jsx`, `test_black.3.5.js` → `test_black.3.6.js`, `linkedin_server.py` güncellendi.
+- **Test**: 184 → 191 test (7 yeni test eklendi), 191/191 PASS. Python sunucu syntax kontrolü: `python -m py_compile linkedin_server.py` OK.
+
 ## [black_3.5] — 2026-07-30
 
 ### Render Senkronizasyonu, TTS Hızı ve Bulut Yükleme Fix'leri
