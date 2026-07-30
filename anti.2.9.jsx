@@ -102,6 +102,13 @@
 //   - Tekrarlayan ekonomi verisi bölümleri kaldırıldı (XXXXX placeholder yok)
 //   - Kaynaklar sahnesi güçlendirildi: kaynak adı + veri + URL birlikte
 //   - buildEconomicDataBlock: [2002:] formatında baz yılı gösterimi
+//
+// black_2.9 (anti.2.9):
+//   - TTS hızı %25 artırıldı (SPEECH_RATE: 1.25) — ağır/yapay konuşma fix
+//   - Konu-dışı ekonomi verisi enjekte edilmesi yasaklandı (ADIM 2 + ADIM 4)
+//   - Ses-görsel senkron düzeltildi: rawSlideSecs +0.3, rawCushion 0.5, playAudio +0.3
+//   - TTS text cleaning güçlendirildi: İYİ Parti yanlış okunması fix, Türkçe karakter koruma
+//   - Cümle kesilmesi ve video sonu ses kırıntısı önlendi
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -171,8 +178,8 @@ try {
 // ── APP_VERSION: Tek kaynak versiyon yönetimi ──────────────────────────────
 const APP_VERSION = {
   major: 2,
-  minor: 8,
-  hotfix: 'H2.8',
+  minor: 9,
+  hotfix: 'H2.9',
   toString() { return `BLACKBOX black_${this.major}.${this.minor}`; },
   toBadge() { return `${this.toString()} • One-Page`; }
 };
@@ -184,6 +191,7 @@ const RENDER_CONFIG = {
   WINDOW_SIZE: 5,
   VOICE_VOLUME: 0.80,
   BGM_VOLUME: 0.29,
+  SPEECH_RATE: 1.25,
   VIDEO_BITS_PER_SECOND: 4_000_000,
   MIN_CROP_SIZE: 10,
   MAX_BLOCKS: 10,
@@ -1551,11 +1559,11 @@ Dönüş ZORUNLU olarak JSON formatında olmalı.`;
       parts = [{ text: 'Bu URL icindeki icerigi oku. Dogrulanabilir iddialari cikar: ' + inputData }];
     }
 
-    // v2.8: Prompt tamamen yeniden yazıldı — girdi analizi öncelikli,
-    // 2002 baz yılı karşılaştırması, dürüstlük kuralı, tekrar kaldırıldı.
+    // v2.9: Konu-dışı ekonomi verisi enjekte edilmesi yasaklandı,
+    // TTS hızı %25 artırıldı, ses-görsel senkron buffer'ları düzeltildi.
     const _curMonthYear = _getCurrentMonthYearTR();
     const _curDate = _getCurrentDateTR();
-    const sysPrompt = `Sen bir fact-check ve doğrulama uzmanısın. Görevin verilen içeriği analiz etmek, doğrulanabilir iddiaları çıkarmak ve Türkiye'deki resmi verilerle karşılaştırmaktır.\n\n═══════════════════════════════════════════════════════════\nADIM 1 — GİRDİYİ ANALİZ ET\n═══════════════════════════════════════════════════════════\nÖnce içeriği dikkatlice incele. Konuyu belirle: ekonomi, sağlık, politika, bilim, tarih, sosyal vb.\nİçerikte DOĞRULANABİLİR iddiaları çıkar (yorum, hakaret, kişisel görüş HARİÇ).\nHer iddiayı bağımsız olarak analiz et.\n\n═══════════════════════════════════════════════════════════\nADIM 2 — KONU EKONOMİ İSE: GÜNCEL VERİLER (${_curMonthYear})\n═══════════════════════════════════════════════════════════\nAşağıdaki veriler TÜRK-İŞ ve TÜİK resmi verileridir. Köşeli parantez içindeki [2002:] değerleri baz yılını gösterir. Ekonomi ile ilgili iddialarda MUTLAKA bu verileri kullan ve karşılaştır:\n\n${buildEconomicDataBlock()}\n\n2002 BAZ YILI KARŞILAŞTIRMA KURALI:\n- Konu ekonomi ise, her ilgili veriyi 2002 yılı ile karşılaştır: "2002'de X idi, ${_curMonthYear} itibarıyla Y oldu."\n- Değişimi net olarak belirt (örn: "23 kata çıktı", "%1800 arttı").\n- Kaynak belirt: TÜİK, TÜRK-İŞ, TCMB.\n- Google Search ile ek güncel veri bulabilirsin ama yukarıdaki resmi verileri BAZ AL.\n\n═══════════════════════════════════════════════════════════\nADIM 3 — DOĞRULAMA VE DEĞERLENDİRME\n═══════════════════════════════════════════════════════════\nHer iddia için:\n1. Durum etiketi ver: Doğru, Kısmen Doğru, Eksik Bağlam, Yanlış, Doğrulanamıyor.\n2. Güven skoru hesapla (0-100).\n3. Analiz yaz: iddia ne diyor, resmi veri ne diyor, aradaki fark nedir?\n4. Kanıtları listele — her kanıt için ZORUNLU alanlar:\n   - kaynak: Resmi kurum adı (TÜİK, TÜRK-İŞ, TCMB, OECD, DİSK vb.)\n   - url: Kaynağın URL'i (mümkünse doğrudan veri sayfası)\n   - veri: İlgili veri ve tarihi (örn: "TÜFE yıllık %32.11, Haziran 2026")\n5. Sonuç yaz: kısa, net özet.\n\n═══════════════════════════════════════════════════════════\nDÜRÜSTLÜK KURALLARI (ASLA İHLAL ETME)\n═══════════════════════════════════════════════════════════\n1. BİLMEDİĞİN bir şey için "Doğrulanamıyor" de. ASLA uydurma.\n2. Resmi kaynaktan teyit edilemeyen iddialar için "Doğrulanamıyor" kullan.\n3. Veriyi bulamadıysan "bu veriye ulaşamadım" de — boş kalemeyi doldurma.\n4. Her rakamın arkasında MUTLAKA resmi kaynak olmalı. Blog, haber sitesi, sosyal medya KAYNAK DEĞİLDİR.\n5. Tarih MUTLAKA belirt: hangi ay ve yılın verisi olduğunu yaz.\n6. Sayı biçimi: 26.500 TL (nokta binlik ayracı, TL olarak).\n\n═══════════════════════════════════════════════════════════\nADIM 4 — VİDEO SENARYOSU\n═══════════════════════════════════════════════════════════\nHer iddia için video senaryosu oluştur:\n- Hook (5sn): Dikkat çekici açılış\n- İddia: Ne iddia ediliyor\n- Açıklama: Bağlam ve detay\n- Kanıtlar: Resmi veriler ve kaynaklar (ekonomi ise 2002 karşılaştırması dahil)\n- Sonuç: Net değerlendirme\n- Kapanış: Özet\n\nHer sahne NOKTA ile biten cümle olmalı. Rakamlar NET ve BÜYÜK yazılmalı.\nKonu ekonomi ise rakamları TL olarak yaz ($ değil). Tarih belirt: ${_curMonthYear}.\n\nDönüş ZORUNLU JSON.`;
+    const sysPrompt = `Sen bir fact-check ve doğrulama uzmanısın. Görevin verilen içeriği analiz etmek, doğrulanabilir iddiaları çıkarmak ve Türkiye'deki resmi verilerle karşılaştırmaktır.\n\n═══════════════════════════════════════════════════════════\nADIM 1 — GİRDİYİ ANALİZ ET\n═══════════════════════════════════════════════════════════\nÖnce içeriği dikkatlice incele. Konuyu belirle: ekonomi, sağlık, politika, bilim, tarih, sosyal vb.\nİçerikte DOĞRULANABİLİR iddiaları çıkar (yorum, hakaret, kişisel görüş HARİÇ).\nHer iddiayı bağımsız olarak analiz et.\n\n═══════════════════════════════════════════════════════════\nADIM 2 — KONU EKONOMİ İSE: GÜNCEL VERİLER (${_curMonthYear})\n═══════════════════════════════════════════════════════════\nÖNEMLİ: Bu adımı SADECE konu doğrudan ekonomi ile ilgili ise uygula.\nKONU EKONOMİ DEĞİLSE (örn: belediye soruşturması, siyaset, spor, sağlık, bilim): EKONOMİK VERİLERİ ASLA KULLANMA. Asgari ücret, açlık sınırı, TÜFE, dolar kuru gibi verileri konuyla ilgisi olmadan senaryoya ENJETE ETME. Konuyla doğrudan bağlantısı yoksa ekonomi verisi GİRME.\n\nAşağıdaki veriler TÜRK-İŞ ve TÜİK resmi verileridir. Köşeli parantez içindeki [2002:] değerleri baz yılını gösterir. Ekonomi ile ilgili iddialarda MUTLAKA bu verileri kullan ve karşılaştır:\n\n${buildEconomicDataBlock()}\n\n2002 BAZ YILI KARŞILAŞTIRMA KURALI:\n- Konu ekonomi ise, her ilgili veriyi 2002 yılı ile karşılaştır: "2002'de X idi, ${_curMonthYear} itibarıyla Y oldu."\n- Değişimi net olarak belirt (örn: "23 kata çıktı", "%1800 arttı").\n- Kaynak belirt: TÜİK, TÜRK-İŞ, TCMB.\n- Google Search ile ek güncel veri bulabilirsin ama yukarıdaki resmi verileri BAZ AL.\n\n═══════════════════════════════════════════════════════════\nADIM 3 — DOĞRULAMA VE DEĞERLENDİRME\n═══════════════════════════════════════════════════════════\nHer iddia için:\n1. Durum etiketi ver: Doğru, Kısmen Doğru, Eksik Bağlam, Yanlış, Doğrulanamıyor.\n2. Güven skoru hesapla (0-100).\n3. Analiz yaz: iddia ne diyor, resmi veri ne diyor, aradaki fark nedir?\n4. Kanıtları listele — her kanıt için ZORUNLU alanlar:\n   - kaynak: Resmi kurum adı (TÜİK, TÜRK-İŞ, TCMB, OECD, DİSK vb.)\n   - url: Kaynağın URL'i (mümkünse doğrudan veri sayfası)\n   - veri: İlgili veri ve tarihi (örn: "TÜFE yıllık %32.11, Haziran 2026")\n5. Sonuç yaz: kısa, net özet.\n\n═══════════════════════════════════════════════════════════\nDÜRÜSTLÜK KURALLARI (ASLA İHLAL ETME)\n═══════════════════════════════════════════════════════════\n1. BİLMEDİĞİN bir şey için "Doğrulanamıyor" de. ASLA uydurma.\n2. Resmi kaynaktan teyit edilemeyen iddialar için "Doğrulanamıyor" kullan.\n3. Veriyi bulamadıysan "bu veriye ulaşamadım" de — boş kalemeyi doldurma.\n4. Her rakamın arkasında MUTLAKA resmi kaynak olmalı. Blog, haber sitesi, sosyal medya KAYNAK DEĞİLDİR.\n5. Tarih MUTLAKA belirt: hangi ay ve yılın verisi olduğunu yaz.\n6. Sayı biçimi: 26.500 TL (nokta binlik ayracı, TL olarak).\n\n═══════════════════════════════════════════════════════════\nADIM 4 — VİDEO SENARYOSU\n═══════════════════════════════════════════════════════════\nHer iddia için video senaryosu oluştur:\n- Hook (5sn): Dikkat çekici açılış\n- İddia: Ne iddia ediliyor\n- Açıklama: Bağlam ve detay\n- Kanıtlar: Resmi veriler ve kaynaklar (ekonomi ise 2002 karşılaştırması dahil)\n- Sonuç: Net değerlendirme\n- Kapanış: Özet\n\nHer sahne NOKTA ile biten cümle olmalı. Rakamlar NET ve BÜYÜK yazılmalı.\nKONU-DIŞI VERİ YASAĞI: Senaryoda SADECE konuyla ilgili verileri kullan. Konu belediye soruşturması, siyaset, spor ise ekonomi verisi (asgari ücret, açlık sınırı, TÜFE) GİRME. Konuyla doğrudan bağlantısı yoksa hiçbir ekonomik veriyi senaryoya dahil etme.\nKonu ekonomi ise rakamları TL olarak yaz ($ değil). Tarih belirt: ${_curMonthYear}.\n\nDönüş ZORUNLU JSON.`;
 
     const payload = {
       contents: [{ role: 'user', parts: parts }],
@@ -1985,8 +1993,11 @@ class MediaSynthesisService {
 
   static async generateAudio(text, voice) {
     if (!text || voice === 'none') return null;
-    // Metni temizle — Türkçe karakterler korunur, sadece sorunlu işaretler kaldırılır
-    let cleanText = text.replace(/[*_#"']/g, '').replace(/\.\.\./g, ', ').replace(/\n/g, ' ').replace(/[:;/\\|{}[\]<>^~`]/g, ', ').replace(/\s+/g, ' ').trim();
+    // v2.9: Türkçe karakterler korunur, kısa kelimeler context ile korunur,
+    // sayı binlik ayracı nokta korunur (85.450 TL gibi), sorunlu işaretler kaldırılır.
+    let cleanText = text.replace(/[*_#]/g, '').replace(/\.\.\./g, ', ').replace(/\n/g, ' ').replace(/[:;/\\|{}[\]<>^~`]/g, ', ').replace(/\s+/g, ' ').trim();
+    // v2.9: "İYİ" gibi tek başına kısa kelimelerin yanlış okunmasını önle — context korunsun
+    cleanText = cleanText.replace(/\bİYİ\s+Parti/g, 'İYİ Parti').replace(/\bİYİ\b(?!\s+Parti)/g, 'İYİ Parti');
         if (cleanText.length < 2) return null;
         const expectedMinDuration = Math.max(2.0, (cleanText.split(/\s+/).length / 2.5));
         const maxRetries = 2;
@@ -2213,7 +2224,7 @@ class MediaSynthesisService {
             else bufferCopy = audioData.wavBuffer;
             const audioBuf = await audioCtx.decodeAudioData(bufferCopy);
             const source = audioCtx.createBufferSource(); source.buffer = audioBuf;
-            source.playbackRate.value = 1.0; // Normal okuma hızı
+            source.playbackRate.value = RENDER_CONFIG.SPEECH_RATE; // v2.9: %25 hız artışı — ağır konuşma fix
             // Süreyi mantıklı aralıkta tut: minDurFromWords ile maxAllowedDur arasında
             const rawDur = audioBuf.duration + 0.5; // +0.5 minimal buffer (önceden 1.5)
             audioDuration = Math.min(Math.max(rawDur, minDurFromWords), maxAllowedDur);
@@ -2480,8 +2491,8 @@ class MediaSynthesisService {
         let rawKapakDur = jobData.assets.thumbnailAudio ? (getAudioDur(jobData.assets.thumbnailAudio, jobData.script.thumbnailText) + 0.05) : 1.0;
         let rawSonSozDur = jobData.script.sonSoz ? (getAudioDur(jobData.assets.sonSozAudio, jobData.script.sonSoz) + 0.05) : 0;
         let rawOutroDur = Math.max(4.0, getAudioDur(jobData.assets.outroAudio, jobData.script.lastQuote) + 0.05); // 0 boşluk — kesintisiz geçiş
-        let rawSlideSecs = jobData.script.videoSlides.map((s, i) => getAudioDur(jobData.assets.audio[i], s.spokenText) + 0.0); // +0.0 — sahne arası boşluk yok
-        let rawCushion = 0.01; // Minimum cushion — video sonu sessizlik yok
+        let rawSlideSecs = jobData.script.videoSlides.map((s, i) => getAudioDur(jobData.assets.audio[i], s.spokenText) + 0.3); // v2.9: +0.3 — ses tam bitsin, cümle kesilmesi olmasın
+        let rawCushion = 0.5; // v2.9: 0.5sn — video sonunda ses kırıntısı olmasın
         let totalNaturalSec = rawKapakDur + rawSonSozDur + rawOutroDur + rawCushion + rawSlideSecs.reduce((a, b) => a + b, 0);
         let scaleFactor = 1.0;
         if (hasMultipleBlocks) { addSystemLog(`Çoklu blok: Süre sınırı yok. Doğal okuma hızı (${totalNaturalSec.toFixed(1)}sn).`, 'info'); }
@@ -2521,7 +2532,7 @@ class MediaSynthesisService {
             try {
               let bufferCopy; if (audioData.wavBuffer instanceof ArrayBuffer) bufferCopy = audioData.wavBuffer.slice(0); else if (audioData.wavBuffer.buffer instanceof ArrayBuffer) bufferCopy = audioData.wavBuffer.buffer.slice(0); else if (typeof audioData.wavBuffer === 'object') { const uint8 = new Uint8Array(Object.values(audioData.wavBuffer)); bufferCopy = uint8.buffer.slice(0); } else bufferCopy = audioData.wavBuffer;
               const audioBuf = await audioCtx.decodeAudioData(bufferCopy); const source = audioCtx.createBufferSource(); source.buffer = audioBuf;
-              source.playbackRate.value = scaleFactor; // Ses + alt yazı senkron — scaleFactor ile aynı hız
+              source.playbackRate.value = Math.max(scaleFactor, RENDER_CONFIG.SPEECH_RATE); // v2.9: Minimum %25 hız artışı — ağır konuşma fix
               const gain = audioCtx.createGain(); gain.gain.value = preferences?.narratorVolume ?? 0.8; // Narrator — kullanıcı ayarından
               source.connect(gain); gain.connect(audioDest); source.start(0);
               baseExactDur = Math.min(audioBuf.duration, 180.0); // Maksimum 3 dakika sınırı
@@ -2529,7 +2540,7 @@ class MediaSynthesisService {
               audioEndPromise = new Promise(resolve => { source.onended = resolve; });
             } catch (e) { console.warn("Ses decode hatası:", e); }
           }
-          let scaledExactDur = baseExactDur * scaleFactor; let totalDur = requestedDuration !== null ? (requestedDuration * scaleFactor) : (scaledExactDur + 0.05); // +0.05 minimal buffer — sessizlik yok
+          let scaledExactDur = baseExactDur * scaleFactor; let totalDur = requestedDuration !== null ? (requestedDuration * scaleFactor) : (scaledExactDur + 0.3); // v2.9: +0.3 — ses tam bitsin
           return { exactDur: scaledExactDur, totalDur, audioEndPromise };
         };
 
@@ -5719,5 +5730,5 @@ class ErrorBoundary extends React.Component {
             }
 
 
-// OTONOM black_2.8 — Gemini Canvas uyumlu versiyon
+// OTONOM black_2.9 — Gemini Canvas uyumlu versiyon
 // Tüm fonksiyonlar tek dosyada, kopyala-yapıştır ile Canvas'ta çalışır.

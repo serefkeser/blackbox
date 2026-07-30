@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const parser = require('@babel/parser');
 
-const FILE = path.join(__dirname, 'anti.2.8.jsx');
+const FILE = path.join(__dirname, 'anti.2.9.jsx');
 const src = fs.readFileSync(FILE, 'utf-8');
 const lines = src.split('\n');
 let pass = 0, fail = 0;
@@ -34,10 +34,10 @@ t('GROQ_API_KEY empty', gq && gq[1] === '', gq ? `"${gq[1].slice(0,15)}"` : 'not
 t('No nvapi- key', !/nvapi-[A-Za-z0-9_-]{20,}/.test(src));
 t('No gsk_ key', !/gsk_[A-Za-z0-9]{20,}/.test(src));
 
-// 3. APP_VERSION (updated to 2.8)
+// 3. APP_VERSION (updated to 2.9)
 t('APP_VERSION major=2', /APP_VERSION\s*=\s*\{[\s\S]*?major:\s*2[,\s]/.test(src));
-t('APP_VERSION minor=8', /APP_VERSION\s*=\s*\{[\s\S]*?minor:\s*8[,\s]/.test(src));
-t('APP_VERSION hotfix=H2.8', /hotfix:\s*['"]H2\.8['"]/.test(src));
+t('APP_VERSION minor=9', /APP_VERSION\s*=\s*\{[\s\S]*?minor:\s*9[,\s]/.test(src));
+t('APP_VERSION hotfix=H2.9', /hotfix:\s*['"]H2\.9['"]/.test(src));
 
 // 4. exportWorkflowLog uses APP_VERSION.toString()
 const exLog = src.match(/exportWorkflowLog[\s\S]{0,2000}/);
@@ -119,7 +119,7 @@ t('No duplicate const imgType', imgTypeCount <= 1, `${imgTypeCount} found`);
 const pf = src.match(/processSelectedFiles[\s\S]{0,3000}/);
 t('processSelectedFiles limit 100', pf && (pf[0].includes('100') || pf[0].includes('MAX_CUSTOM_SCENE_IMAGES')));
 
-// ═══ NEW TESTS for anti.2.8 (black_2.4+) ═══
+// ═══ NEW TESTS for anti.2.9 (black_2.4+) ═══
 
 // 19. LinkedIn API integration
 t('shareToLinkedInAPI defined', /shareToLinkedInAPI\s*=/.test(src));
@@ -177,8 +177,8 @@ t('No hardcoded otonom_proxy_secret (except constant def)', hardcodedTokenLines.
 t('No hardcoded 2026/7/28 in static_gzt URLs', !/2026\/7\/28/.test(src));
 
 // 29. Version history
-t('Version history has black_2.8', /black_2\.8\s*\(anti\.1\.0\)/.test(src));
-t('Last line says black_2.8', /OTONOM black_2\.8/.test(src));
+t('Version history has black_2.9', /black_2\.9\s*\(anti\.2\.9\)/.test(src));
+t('Last line says black_2.9', /OTONOM black_2\.9/.test(src));
 
 // 30. Music search + preview
 t('Music search query state', /musicSearchQuery/.test(src));
@@ -218,7 +218,7 @@ t('Buffer token UI input', /BUFFER_API_KEY.*onChange.*SafeStorage\.setItem/.test
 t('cors.eu.org proxy', /cors\.eu\.org/.test(src));
 t('corsproxy.io URL encoded', /corsproxy\.io\/\?url=.*encodeURIComponent/.test(src));
 
-// 38. İddia Analizi prompt geliştirme (black_2.8)
+// 38. İddia Analizi prompt geliştirme (black_2.8→2.9)
 t('ECONOMIC_DATA has baseline2002', /baseline2002:\s*['"]/.test(src));
 t('ECONOMIC_DATA baseline2002 for aclikSiniri', /aclikSiniri:\s*\{[^}]*baseline2002:\s*['"]/.test(src));
 t('ECONOMIC_DATA baseline2002 for asgariUcret', /asgariUcret:\s*\{[^}]*baseline2002:\s*['"]/.test(src));
@@ -243,9 +243,39 @@ t('Kaynaklar sahnesi has k.url', /k\.url/.test(src));
 t('Kaynaklar sahnesi has kaynakSet dedup', /kaynakSet/.test(src));
 t('Kaynaklar sahnesi has KAYNAKLAR VE REFERANSLAR', /KAYNAKLAR VE REFERANSLAR/.test(src));
 
+// ═══ 39. v2.9: TTS hız, konu-dışı ekonomi yasağı, ses-görsel senkron ═══
+
+// SPEECH_RATE config
+t('RENDER_CONFIG has SPEECH_RATE', /SPEECH_RATE:\s*1\.25/.test(src));
+
+// playAudio uses SPEECH_RATE
+t('playAudio uses RENDER_CONFIG.SPEECH_RATE', /Math\.max\(scaleFactor,\s*RENDER_CONFIG\.SPEECH_RATE\)/.test(src));
+
+// Güzel söz render uses SPEECH_RATE
+t('Güzel söz render uses SPEECH_RATE', /playbackRate\.value\s*=\s*RENDER_CONFIG\.SPEECH_RATE/.test(src));
+
+// Konu-dışı ekonomi yasağı — ADIM 2
+t('Prompt has KONU EKONOMİ DEĞİLSE', /KONU EKONOMİ DEĞİLSE/.test(src));
+t('Prompt has ENJETE ETME', /ENJETE ETME/.test(src));
+
+// Konu-dışı veri yasağı — ADIM 4
+t('Prompt has KONU-DIŞI VERİ YASAĞI', /KONU-DIŞI VERİ YASAĞI/.test(src));
+
+// Ses-görsel senkron buffer
+t('rawSlideSecs has +0.3 buffer', /\+ 0\.3\).*v2\.9.*ses tam bitsin/.test(src));
+t('rawCushion is 0.5', /rawCushion\s*=\s*0\.5/.test(src));
+t('playAudio has +0.3 buffer', /\+ 0\.3\).*v2\.9.*ses tam bitsin/.test(src));
+
+// TTS text cleaning — İYİ Parti fix
+t('TTS has İYİ Parti fix', /İYİ\\s\+Parti/.test(src) || /İYİ\s\+Parti/.test(src) || src.includes('İYİ Parti'));
+
+// Version history has black_2.9
+t('Version history has black_2.9', /black_2\.9\s*\(anti\.2\.9\)/.test(src));
+t('Last line says black_2.9', /OTONOM black_2\.9/.test(src));
+
 // ═══ RESULTS ═══
 console.log('═══════════════════════════════════════════════════════════════');
-console.log(`  anti.2.8.jsx (black_2.8) TEST RESULTS: ${pass} PASS / ${fail} FAIL / ${pass+fail} TOTAL`);
+console.log(`  anti.2.9.jsx (black_2.9) TEST RESULTS: ${pass} PASS / ${fail} FAIL / ${pass+fail} TOTAL`);
 console.log('═══════════════════════════════════════════════════════════════');
 out.forEach(r => console.log(`  ${r}`));
 console.log('═══════════════════════════════════════════════════════════════');
@@ -253,6 +283,6 @@ if (fail > 0) {
   console.log(`  ❌ ${fail} TEST(LER) BAŞARISIZ — DÜZELTME GEREKİYOR`);
   process.exit(1);
 } else {
-  console.log(`  ✅ TÜM TESTLER BAŞARILI — anti.2.8.jsx (black_2.8) ONAYLANDI`);
+  console.log(`  ✅ TÜM TESTLER BAŞARILI — anti.2.9.jsx (black_2.9) ONAYLANDI`);
   process.exit(0);
 }

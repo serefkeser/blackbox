@@ -2,6 +2,16 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_2.9] — 2026-07-30
+
+### İddia Analizi Video Hataları Düzeltildi
+- **TTS hızı %25 artırıldı**: `RENDER_CONFIG.SPEECH_RATE: 1.25` — ağır/yapay konuşma fix
+- **Konu-dışı ekonomi verisi yasaklandı**: ADIM 2'ye "KONU EKONOMİ DEĞİLSE: EKONOMİK VERİLERİ ASLA KULLANMA, ENJETE ETME" kuralı eklendi. ADIM 4'e "KONU-DIŞI VERİ YASAĞI" eklendi — belediye soruşturması gibi konulara asgari ücret/açlık sınırı enjekte edilmesi önlendi
+- **Ses-görsel senkron düzeltildi**: `rawSlideSecs` buffer `+0.0` → `+0.3` (cümle kesilmesi önlendi), `rawCushion` `0.01` → `0.5` (video sonu ses kırıntısı önlendi), `playAudio` buffer `+0.05` → `+0.3`
+- **TTS text cleaning güçlendirildi**: "İYİ" kelimesinin "için" olarak yanlış okunması fix (context koruma), `"` temizleme kaldırıldı (Türkçe metni bozuyordu)
+- **Dosya adı**: `anti.2.8.jsx` → `anti.2.9.jsx`, `test_anti.2.8.js` → `test_anti.2.9.js`
+- **Test**: 110 → 122 test (12 yeni test eklendi), 122/122 PASS
+
 ## [black_2.8] — 2026-07-30
 
 ### Dosya Yeniden Adlandırma
