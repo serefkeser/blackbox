@@ -2,6 +2,25 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.8] — 2026-07-30
+
+### İddia Analizi: Orijinal Medya Oynatımı + Karşı-Örnek İfşa Sistemi
+- **Sorun**: İddia Analizi'nde yüklenen ses/video hiç oynatılmadan direkt analiz ediliyordu. Kullanıcı orijinal medyayı videoda görmek istiyor. Ayrıca analizde karşı-örnek verilerle ifşa yapılması, kaynakların mutlaka yazılması ve en güncel resmi verinin kullanılması istendi.
+- **Çözüm**:
+  - **Raw Playback**: İddia Analizi + media modunda, yüklenen ses/video `script._originalMedia` olarak saklanır. Clickbait'ten sonra `videoSlides` dizisinin başına `_isRawMedia: true` sahnesi eklenir. Render sırasında bu sahne:
+    - **Video ise**: Orijinal video element frame-by-frame canvas'a çizilir, orijinal ses çalınır, hiçbir yeri kesilmeden tam süre oynatılır.
+    - **Ses ise**: Clickbait görseli sabit gösterilir, orijinal ses tam süre çalınır.
+    - TTS/altyazı yok — sadece orijinal medya. "İŞTE KANIT" başlığı üstte gösterilir.
+  - **Prompt Güncellemesi (ADIM 3)**: 3 yeni kural eklendi:
+    - KARŞI-ÖRNEK VE İFŞA KURALI: Her iddiaya karşı gerçek olaylardan, resmi verilerden örnek ver. "Bu bir veridir, adalettir, başka bir olaydır" tarzında karşılaştırma.
+    - KAYNAK ZORUNLULUĞU: Kanıt varsa MUTLAKA kaynak adı + URL + veri yaz. Kaynaksız iddia bırakma.
+    - EN GÜNCEL VERİ KURALI: Devletin sunduğu resmi ve en güncel veriyi kullan. Temmuz 2026 verisi varsa onu yayınla.
+  - **Prompt Güncellemesi (ADIM 4)**: Senaryo yapısına "Orijinal Medya" adımı eklendi (sistem tarafından otomatik eklenir, AI yazmaz). Karşılaştırma adımına "bu bir veridir, adalettir, başka bir olaydır" örneği eklendi. Kanıtlar adımına "kaynak varsa MUTLAKA yaz" zorunluluğu eklendi.
+  - **Workflow**: `tipLabel` artık iddia_analizi için "İddia Analizi" olarak gösterilir (önceden "Güzel Söz" idi).
+  - **Asset üretimi**: `_isRawMedia` sahnesi için görsel/ses üretimi atlanır (orijinal medya kullanılır).
+- **Dosya adı**: `black.3.7.jsx` → `black.3.8.jsx`, `test_black.3.7.js` → `test_black.3.8.js`.
+- **Test**: 192 → 206 test (14 yeni v3.8 testi eklendi), 206/206 PASS.
+
 ## [black_3.7] — 2026-07-30
 
 ### Manuel Müzik Klasörü Seçimine Dönüş (Otomatik Bulut Yedekleme Kaldırıldı)
