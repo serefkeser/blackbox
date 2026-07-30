@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const parser = require('@babel/parser');
 
-const FILE = path.join(__dirname, 'black.2.9.jsx');
+const FILE = path.join(__dirname, 'black.3.0.jsx');
 const src = fs.readFileSync(FILE, 'utf-8');
 const lines = src.split('\n');
 let pass = 0, fail = 0;
@@ -34,10 +34,10 @@ t('GROQ_API_KEY empty', gq && gq[1] === '', gq ? `"${gq[1].slice(0,15)}"` : 'not
 t('No nvapi- key', !/nvapi-[A-Za-z0-9_-]{20,}/.test(src));
 t('No gsk_ key', !/gsk_[A-Za-z0-9]{20,}/.test(src));
 
-// 3. APP_VERSION (updated to 2.9)
-t('APP_VERSION major=2', /APP_VERSION\s*=\s*\{[\s\S]*?major:\s*2[,\s]/.test(src));
-t('APP_VERSION minor=9', /APP_VERSION\s*=\s*\{[\s\S]*?minor:\s*9[,\s]/.test(src));
-t('APP_VERSION hotfix=H2.9', /hotfix:\s*['"]H2\.9['"]/.test(src));
+// 3. APP_VERSION (updated to 3.0)
+t('APP_VERSION major=2', /APP_VERSION\s*=\s*\{[\s\S]*?major:\s*3[,\s]/.test(src));
+t('APP_VERSION minor=0', /APP_VERSION\s*=\s*\{[\s\S]*?minor:\s*0[,\s]/.test(src));
+t('APP_VERSION hotfix=H3.0', /hotfix:\s*['"]H3\.0['"]/.test(src));
 
 // 4. exportWorkflowLog uses APP_VERSION.toString()
 const exLog = src.match(/exportWorkflowLog[\s\S]{0,2000}/);
@@ -119,7 +119,7 @@ t('No duplicate const imgType', imgTypeCount <= 1, `${imgTypeCount} found`);
 const pf = src.match(/processSelectedFiles[\s\S]{0,3000}/);
 t('processSelectedFiles limit 100', pf && (pf[0].includes('100') || pf[0].includes('MAX_CUSTOM_SCENE_IMAGES')));
 
-// ═══ NEW TESTS for black.2.9 (black_2.4+) ═══
+// ═══ NEW TESTS for black.3.0 (black_2.4+) ═══
 
 // 19. LinkedIn API integration
 t('shareToLinkedInAPI defined', /shareToLinkedInAPI\s*=/.test(src));
@@ -177,8 +177,8 @@ t('No hardcoded otonom_proxy_secret (except constant def)', hardcodedTokenLines.
 t('No hardcoded 2026/7/28 in static_gzt URLs', !/2026\/7\/28/.test(src));
 
 // 29. Version history
-t('Version history has black_2.9', /black_2\.9\s*\(anti\.2\.9\)/.test(src));
-t('Last line says black_2.9', /OTONOM black_2\.9/.test(src));
+t('Version history has black_3.0', /black_3\.0\s*\(black\.3\.0\)/.test(src));
+t('Last line says black_3.0', /OTONOM black_3\.0/.test(src));
 
 // 30. Music search + preview
 t('Music search query state', /musicSearchQuery/.test(src));
@@ -218,7 +218,7 @@ t('Buffer token UI input', /BUFFER_API_KEY.*onChange.*SafeStorage\.setItem/.test
 t('cors.eu.org proxy', /cors\.eu\.org/.test(src));
 t('corsproxy.io URL encoded', /corsproxy\.io\/\?url=.*encodeURIComponent/.test(src));
 
-// 38. İddia Analizi prompt geliştirme (black_2.8→2.9)
+// 38. İddia Analizi prompt geliştirme (black_2.8→3.0)
 t('ECONOMIC_DATA has baseline2002', /baseline2002:\s*['"]/.test(src));
 t('ECONOMIC_DATA baseline2002 for aclikSiniri', /aclikSiniri:\s*\{[^}]*baseline2002:\s*['"]/.test(src));
 t('ECONOMIC_DATA baseline2002 for asgariUcret', /asgariUcret:\s*\{[^}]*baseline2002:\s*['"]/.test(src));
@@ -270,12 +270,34 @@ t('playAudio has +0.3 buffer', /\+ 0\.3\).*v2\.9.*ses tam bitsin/.test(src));
 t('TTS has İYİ Parti fix', /İYİ\\s\+Parti/.test(src) || /İYİ\s\+Parti/.test(src) || src.includes('İYİ Parti'));
 
 // Version history has black_2.9
-t('Version history has black_2.9', /black_2\.9\s*\(anti\.2\.9\)/.test(src));
-t('Last line says black_2.9', /OTONOM black_2\.9/.test(src));
+t('Version history has black_3.0', /black_3\.0\s*\(black\.3\.0\)/.test(src));
+t('Last line says black_3.0', /OTONOM black_3\.0/.test(src));
+
+// ═══ 40. v3.0: Müzik kalıcı saklama — catbox.moe + localStorage ═══
+
+// Cloud müzik URL metodları
+t('saveCloudMusicUrls defined', /saveCloudMusicUrls\s*\(/.test(src));
+t('getCloudMusicUrls defined', /getCloudMusicUrls\s*\(\s*\)/.test(src));
+t('clearCloudMusicUrls defined', /clearCloudMusicUrls\s*\(\s*\)/.test(src));
+t('removeCloudMusicUrl defined', /removeCloudMusicUrl\s*\(/.test(src));
+
+// localStorage key
+t('ns_cloudMusicUrls key used', /ns_cloudMusicUrls/.test(src));
+
+// catbox.moe upload in handleFolderSelectLegacy
+t('catbox.moe upload in folder select', /catbox\.moe\/user\/api\.php/.test(src));
+t('folder select saves cloud URLs', /AssetManagerService\.saveCloudMusicUrls\(cloudUrls\)/.test(src));
+
+// loadLocalMusic: cloud restore when IndexedDB empty
+t('loadLocalMusic has cloud restore', /IndexedDB boş.*buluttan geri/i.test(src));
+t('cloud restore uses corsproxy', /corsproxy\.io.*encodeURIComponent.*cu\.url/.test(src));
+
+// deleteMusic: removes cloud URL
+t('deleteMusic removes cloud URL', /removeCloudMusicUrl\(as\)/.test(src));
 
 // ═══ RESULTS ═══
 console.log('═══════════════════════════════════════════════════════════════');
-console.log(`  black.2.9.jsx (black_2.9) TEST RESULTS: ${pass} PASS / ${fail} FAIL / ${pass+fail} TOTAL`);
+console.log(`  black.3.0.jsx (black_3.0) TEST RESULTS: ${pass} PASS / ${fail} FAIL / ${pass+fail} TOTAL`);
 console.log('═══════════════════════════════════════════════════════════════');
 out.forEach(r => console.log(`  ${r}`));
 console.log('═══════════════════════════════════════════════════════════════');
@@ -283,6 +305,6 @@ if (fail > 0) {
   console.log(`  ❌ ${fail} TEST(LER) BAŞARISIZ — DÜZELTME GEREKİYOR`);
   process.exit(1);
 } else {
-  console.log(`  ✅ TÜM TESTLER BAŞARILI — black.2.9.jsx (black_2.9) ONAYLANDI`);
+  console.log(`  ✅ TÜM TESTLER BAŞARILI — black.3.0.jsx (black_3.0) ONAYLANDI`);
   process.exit(0);
 }

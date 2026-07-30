@@ -109,6 +109,15 @@
 //   - Ses-görsel senkron düzeltildi: rawSlideSecs +0.3, rawCushion 0.5, playAudio +0.3
 //   - TTS text cleaning güçlendirildi: İYİ Parti yanlış okunması fix, Türkçe karakter koruma
 //   - Cümle kesilmesi ve video sonu ses kırıntısı önlendi
+//
+// black_3.0 (black.3.0):
+//   - Müzik kalıcı saklama: catbox.moe bulut yedek + localStorage URL
+//   - IndexedDB silinse bile müzikler buluttan otomatik geri yüklenir
+//   - saveCloudMusicUrls/getCloudMusicUrls/removeCloudMusicUrl metodları eklendi
+//   - handleFolderSelectLegacy: dosyaları catbox.moe'ye yükle + URL'leri localStorage'a kaydet
+//   - loadLocalMusic: IndexedDB boşsa catbox URL'lerinden CORS proxy ile geri yükle
+//   - deleteMusic: catbox URL'ini de localStorage'dan temizle
+//   - "anti" öneki kaldırıldı, dosya adı black.X.X.jsx olarak devam ediyor
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -177,9 +186,9 @@ try {
 
 // ── APP_VERSION: Tek kaynak versiyon yönetimi ──────────────────────────────
 const APP_VERSION = {
-  major: 2,
-  minor: 9,
-  hotfix: 'H2.9',
+  major: 3,
+  minor: 0,
+  hotfix: 'H3.0',
   toString() { return `BLACKBOX black_${this.major}.${this.minor}`; },
   toBadge() { return `${this.toString()} • One-Page`; }
 };
@@ -776,6 +785,12 @@ class AssetManagerService {
   // İndirilenler klasörü için directory handle
   static async saveDownloadsDirHandle(handle) { try { const db = await this.getDB(); const tx = db.transaction(DIR_STORE, 'readwrite'); tx.objectStore(DIR_STORE).put({ id: 'downloadsDir', handle, name: handle.name, timestamp: Date.now() }); return new Promise(r => tx.oncomplete = () => r(true)); } catch (e) { return false; } }
   static async getDownloadsDirHandle() { try { const db = await this.getDB(); const tx = db.transaction(DIR_STORE, 'readonly'); const req = tx.objectStore(DIR_STORE).get('downloadsDir'); return new Promise(r => req.onsuccess = () => r(req.result || null)); } catch (e) { return null; } }
+
+  // v3.0: Cloud müzik URL kalıcılığı — IndexedDB silinirse localStorage'dan geri yükle
+  static saveCloudMusicUrls(urls) { try { SafeStorage.setItem('ns_cloudMusicUrls', JSON.stringify(urls)); return true; } catch (e) { return false; } }
+  static getCloudMusicUrls() { try { return JSON.parse(SafeStorage.getItem('ns_cloudMusicUrls')) || []; } catch (e) { return []; } }
+  static clearCloudMusicUrls() { try { SafeStorage.removeItem('ns_cloudMusicUrls'); return true; } catch (e) { return false; } }
+  static removeCloudMusicUrl(id) { try { const urls = this.getCloudMusicUrls(); const filtered = urls.filter(u => u.id !== id); SafeStorage.setItem('ns_cloudMusicUrls', JSON.stringify(filtered)); return true; } catch (e) { return false; } }
 }
 
 const syncMusicFromDir = async (dirHandle, existingMusic) => {
@@ -4667,7 +4682,44 @@ class ErrorBoundary extends React.Component {
                           addSystemLog(`✓ Seçili müzik yüklendi: ${activeTrack.name}`, 'info');
                         }
                       } else {
-                        addSystemLog("Müzik kütüphanesi boş. 'MÜZİK KLASÖRÜ SEÇ' butonundan bir kez ekleyin.", 'info');
+                        // v3.0: IndexedDB boş — catbox.moe bulut yedeğinden geri yükle
+                        const cloudUrls = AssetManagerService.getCloudMusicUrls();
+                        if (cloudUrls.length > 0) {
+                          addSystemLog(`☁ IndexedDB boş, ${cloudUrls.length} müzik buluttan geri yükleniyor...`, 'info');
+                          setStudioMedia(s => ({ ...s, isLoading: true, statusMsg: 'Buluttan geri yükleniyor...' }));
+                          let restoredCount = 0;
+                          for (const cu of cloudUrls) {
+                            try {
+                              const proxyUrl = 'https://corsproxy.io/?url=' + encodeURIComponent(cu.url);
+              const r = await fetch(proxyUrl);
+              if (!r.ok) throw new Error('fetch failed');
+              const blob = await r.blob();
+              const b64 = await NetworkUtils.fileToBase64(blob);
+              await AssetManagerService.saveMusicToLib({ id: cu.id, name: cu.name, data: b64 });
+              restoredCount++;
+                            } catch (ce) { addSystemLog(`Geri yükleme başarısız: ${cu.name}`, 'warn'); }
+                          }
+                          if (restoredCount > 0) {
+                            const restoredMusic = await AssetManagerService.getAllMusicFromLib();
+                            setStudioMedia(s => ({ ...s, musicList: [...restoredMusic], isLoading: false, statusMsg: 'Yerel Mod', syncedFolderName: SafeStorage.getItem('ns_syncedFolderName') || 'Muzik' }));
+                            addSystemLog(`✅ ${restoredCount} müzik buluttan geri yüklendi!`, 'success');
+                            // İlk müziği otomatik seç
+                            const firstTrack = restoredMusic[0];
+                            if (firstTrack && firstTrack.data) {
+                              const blob = _base64ToBlob(firstTrack.data);
+                              const url = ObjectURLManager.create(blob);
+                              await AssetManagerService.saveMedia('CUSTOM_MUSIC', url);
+                              SafeStorage.setItem('ns_selectedBgmId', firstTrack.id);
+                              SafeStorage.setItem('ns_selectedBgmName', firstTrack.name);
+                              setPrefs(p => { const np = { ...p, ambientSound: firstTrack.id, customBgMusicName: firstTrack.name, customBgMusicId: firstTrack.id }; SafeStorage.setItem('ns_prefs', JSON.stringify(np)); return np; });
+                            }
+                          } else {
+                            setStudioMedia(s => ({ ...s, isLoading: false, statusMsg: 'Yerel Mod' }));
+                            addSystemLog("Bulut geri yükleme başarısız. 'MÜZİK KLASÖRÜ SEÇ' butonundan yeniden ekleyin.", 'warn');
+                          }
+                        } else {
+                          addSystemLog("Müzik kütüphanesi boş. 'MÜZİK KLASÖRÜ SEÇ' butonundan bir kez ekleyin.", 'info');
+                        }
                       }
                     } catch (e) { setStudioMedia(s => ({ ...s, isLoading: false, statusMsg: 'Yerel Mod' })); }
                   };
@@ -4748,7 +4800,7 @@ class ErrorBoundary extends React.Component {
               // studioMedia.customSceneImages dogrudan okunuyor -> [studioMedia] sart.
               const handleCustomSceneImagesUpload = useCallback(async (e) => { const files = Array.from(e.target ? e.target.files : e); if (!files.length) return; const availableSlots = RENDER_CONFIG.MAX_CUSTOM_SCENE_IMAGES - (studioMedia.customSceneImages?.length || 0); const filesToProcess = files.slice(0, availableSlots); const newB64s = []; for (let file of filesToProcess) { if (file.type.startsWith('image/')) { const b64 = await NetworkUtils.compressImage(file); newB64s.push(b64); } } const updatedImages = [...(studioMedia.customSceneImages || []), ...newB64s].slice(0, RENDER_CONFIG.MAX_CUSTOM_SCENE_IMAGES); for (let i = 0; i < updatedImages.length; i++) await AssetManagerService.saveMedia("CUSTOM_SCENE_IMG_" + i, updatedImages[i]); setStudioMedia(s => ({ ...s, customSceneImages: updatedImages })); const newMediaFiles = newB64s.map((b64, i) => ({ name: `SabitGorsel_${Date.now()}_${i}.jpg`, type: 'image/jpeg', data: b64 })); if (newMediaFiles.length > 0) setUiState(prev => ({ ...prev, selectedMediaFiles: [...prev.selectedMediaFiles, ...newMediaFiles] })); if (e.target) e.target.value = null; }, [studioMedia]);
               const handleCustomSceneImageDelete = useCallback(async (idx) => { const updated = studioMedia.customSceneImages.filter((_, i) => i !== idx); for (let i = 0; i < RENDER_CONFIG.MAX_CUSTOM_SCENE_IMAGES; i++) await AssetManagerService.deleteMedia("CUSTOM_SCENE_IMG_" + i); for (let i = 0; i < updated.length; i++) await AssetManagerService.saveMedia("CUSTOM_SCENE_IMG_" + i, updated[i]); setStudioMedia(s => ({ ...s, customSceneImages: updated })); }, [studioMedia]);
-              const deleteMusic = async () => { try { const as = prefs.ambientSound; if (as && !['none', 'rain', 'wind', 'waves', 'fire'].includes(as)) { const oldUrl = await AssetManagerService.loadMedia('CUSTOM_MUSIC'); if (oldUrl && oldUrl.startsWith('blob:')) ObjectURLManager.revoke(oldUrl); await AssetManagerService.deleteMedia('CUSTOM_MUSIC'); await AssetManagerService.removeMusicFromLib(as); const updatedList = studioMedia.musicList.filter(m => m.id !== as); await saveToFirestore({ bgmList: updatedList, selectedBgmId: null }); setPrefs(p => ({ ...p, ambientSound: 'none' })); } } catch(e) { ErrorHandler.silent(e); } };
+              const deleteMusic = async () => { try { const as = prefs.ambientSound; if (as && !['none', 'rain', 'wind', 'waves', 'fire'].includes(as)) { const oldUrl = await AssetManagerService.loadMedia('CUSTOM_MUSIC'); if (oldUrl && oldUrl.startsWith('blob:')) ObjectURLManager.revoke(oldUrl); await AssetManagerService.deleteMedia('CUSTOM_MUSIC'); await AssetManagerService.removeMusicFromLib(as); AssetManagerService.removeCloudMusicUrl(as); const updatedList = studioMedia.musicList.filter(m => m.id !== as); await saveToFirestore({ bgmList: updatedList, selectedBgmId: null }); setPrefs(p => ({ ...p, ambientSound: 'none' })); } } catch(e) { ErrorHandler.silent(e); } };
               const handleFolderSelect = async () => {
                 if (musicFileInputRef.current) musicFileInputRef.current.click();
               };
@@ -4764,19 +4816,32 @@ class ErrorBoundary extends React.Component {
                   if (parts.length > 1) folderName = parts[0];
                 }
                 SafeStorage.setItem('ns_syncedFolderName', folderName);
-                addSystemLog(`${audioFiles.length} müzik dosyası bulundu (${folderName}), IndexedDB'ye kalıcı kaydediliyor...`, 'info');
+                addSystemLog(`${audioFiles.length} müzik dosyası bulundu (${folderName}), IndexedDB'ye kaydediliyor + buluta yedekleniyor...`, 'info');
                 let savedCount = 0;
+                const cloudUrls = AssetManagerService.getCloudMusicUrls();
+                const existingCloudIds = new Set(cloudUrls.map(u => u.id));
                 for (const file of audioFiles) {
                   const id = "fm_" + file.name.replace(/[^a-zA-Z0-9]/g, '_') + "_" + file.size;
                   const existing = await AssetManagerService.getMusicFromLib(id);
-                  if (existing) continue;
+                  if (existing && existingCloudIds.has(id)) continue;
                   const b64 = await NetworkUtils.fileToBase64(file);
                   await AssetManagerService.saveMusicToLib({ id, name: file.name, data: b64 });
                   savedCount++;
+                  // v3.0: catbox.moe'ye yükle — kalıcı URL al, localStorage'a kaydet
+                  if (!existingCloudIds.has(id)) {
+                    try {
+                      const fd = new FormData();
+                      fd.append('reqtype', 'fileupload');
+                      fd.append('fileToUpload', file);
+                      const r = await fetch('https://catbox.moe/user/api.php', { method: 'POST', body: fd });
+                      if (r.ok) { const url = (await r.text()).trim(); if (url.startsWith('https://')) { cloudUrls.push({ id, name: file.name, url }); addSystemLog(`☁ ${file.name} buluta yedeklendi`, 'info'); } }
+                    } catch (ce) { addSystemLog(`Bulut yedek başarısız: ${file.name} (IndexedDB'de mevcut)`, 'warn'); }
+                  }
                 }
+                AssetManagerService.saveCloudMusicUrls(cloudUrls);
                 const allMusic = await AssetManagerService.getAllMusicFromLib();
                 setStudioMedia(s => ({ ...s, musicList: [...allMusic], syncedFolderName: folderName }));
-                addSystemLog(`✅ ${folderName} klasöründeki ${allMusic.length} müzik kütüphanede KALICI saklandı! Her girişte otomatik hazır.`, 'success');
+                addSystemLog(`✅ ${folderName}: ${allMusic.length} müzik KALICI saklandı! IndexedDB + ${cloudUrls.length} bulut yedek. Refresh'te otomatik geri yüklenir.`, 'success');
                 e.target.value = null;
               };
               const clearSyncedFolder = async () => {
@@ -5730,5 +5795,5 @@ class ErrorBoundary extends React.Component {
             }
 
 
-// OTONOM black_2.9 — Gemini Canvas uyumlu versiyon
+// OTONOM black_3.0 — Gemini Canvas uyumlu versiyon
 // Tüm fonksiyonlar tek dosyada, kopyala-yapıştır ile Canvas'ta çalışır.

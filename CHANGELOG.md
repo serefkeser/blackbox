@@ -2,6 +2,18 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.0] — 2026-07-30
+
+### Müzik Kalıcı Saklama Çözümü
+- **Sorun**: Gemini Canvas'ta IndexedDB refresh/değişiklik sonrası siliniyordu, müzik her seferinde yeniden yükleniyordu
+- **Çözüm**: 3 katmanlı kalıcılık — IndexedDB (hızlı) + catbox.moe bulut yedek (kalıcı URL) + localStorage (URL listesi)
+- **saveCloudMusicUrls/getCloudMusicUrls/removeCloudMusicUrl**: AssetManagerService'e cloud müzik URL metodları eklendi
+- **handleFolderSelectLegacy**: Müzik dosyaları IndexedDB'ye kaydedilirken aynı anda catbox.moe'ye yükleme yapılıyor, URL'ler localStorage'a kaydediliyor
+- **loadLocalMusic**: IndexedDB boşsa (refresh sonrası) catbox URL'leri corsproxy.io üzerinden fetch edilip IndexedDB'ye geri yükleniyor — kullanıcı müdahalesi gerekmez
+- **deleteMusic**: Müzik silinirken catbox URL'i de localStorage'dan temizleniyor
+- **Dosya adı**: `black.2.9.jsx` → `black.3.0.jsx`, `test_black.2.9.js` → `test_black.3.0.js`
+- **Test**: 122 → 132 test (10 yeni test eklendi), 132/132 PASS
+
 ## [black_2.9] — 2026-07-30
 
 ### Dosya Yeniden Adlandırma
