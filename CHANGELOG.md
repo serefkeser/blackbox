@@ -2,6 +2,18 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.4] — 2026-07-30
+
+### Müzik Kalıcı Saklama Fix
+- **Sorun 1 — SafeStorage.removeItem eksik**: `SafeStorage` objesinde `getItem` ve `setItem` var ama `removeItem` yoktu. 5+ yerde çağrılıyordu (müzik silme, prefs temizleme). TypeError veriyor, try/catch içinde sessizce fail ediyordu.
+- **Çözüm**: `removeItem` metodu eklendi: `localStorage.removeItem` + memoryStore fallback.
+- **Sorun 2 — Bulut yedek geçici servislerde**: `uploadMediaToCloud` sıralaması tmpfiles.org (geçici) → Python bridge → litterbox 1h → file.io idi. Hiçbiri kalıcı değildi. Refresh'te URL'ler ölü → geri yükleme fail → "Müzik kütüphanesi boş".
+- **Çözüm**: catbox.moe kalıcı yükleme eklendi (CORS proxy üzerinden, sonsuz saklama, 200MB'a kadar). Yeni sıralama: catbox.moe kalıcı → tmpfiles.org → Python bridge → litterbox 72h → file.io.
+- **Sorun 3 — Geri yükleme tek CORS proxy**: `loadLocalMusic` geri yükleme sadece `corsproxy.io` kullanıyordu. O fail olursa başka proxy yoktu.
+- **Çözüm**: Çoklu CORS proxy fallback zinciri eklendi: corsproxy.io → allorigins.win → direct fetch.
+- **Dosya adı**: `black.3.3.jsx` → `black.3.4.jsx`, `test_black.3.3.js` → `test_black.3.4.js`
+- **Test**: 166 → 173 test (7 yeni test eklendi), 173/173 PASS
+
 ## [black_3.3] — 2026-07-30
 
 ### emotionForImage Scope Fix
