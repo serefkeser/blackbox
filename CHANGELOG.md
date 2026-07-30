@@ -2,6 +2,21 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.7] — 2026-07-30
+
+### Manuel Müzik Klasörü Seçimine Dönüş (Otomatik Bulut Yedekleme Kaldırıldı)
+- **Sorun**: Kullanıcı otomatik bulut müzik yedeklemeyi istemiyor; müzik klasörü seçildiğinde sadece dosyaların listelenip IndexedDB'ye kaydedilmesini, bulut servislerine (catbox, temp.sh, tmpfiles, file.io) otomatik upload yapılmamasını istedi.
+- **Çözüm**:
+  - `handleFolderSelectLegacy` artık sadece ses dosyalarını `NetworkUtils.fileToBase64` ile okuyup `AssetManagerService.saveMusicToLib` ile IndexedDB'ye kaydediyor. `uploadMediaToCloud` çağrısı, `cloudUrls` dizisi ve `saveCloudMusicUrls` kaydı kaldırıldı.
+  - `loadLocalMusic` useEffect'i artık IndexedDB boşsa buluttan geri yükleme yapmıyor; sadece kullanıcıya "MÜZİK KLASÖRÜ SEÇ" butonuyla yeniden eklemesi gerektiğini söylüyor.
+  - `deleteMusic` içinden `removeCloudMusicUrl` çağrısı kaldırıldı.
+  - `AssetManagerService` içinde `saveCloudMusicUrls`, `getCloudMusicUrls`, `clearCloudMusicUrls`, `removeCloudMusicUrl` metodları ve `ns_cloudMusicUrls` localStorage key'i tamamen kaldırıldı.
+  - UI alt metni: `"Müzik klasörü seçin — tüm müzikler otomatik yüklenir"` → `"Müzik klasörü seçin — dosyalar yerel olarak listelenir"`.
+  - Başarı logu: `"...KALICI saklandı! IndexedDB + ... bulut yedek"` → `"...yerel olarak kaydedildi. Toplam ... müzik listelendi."`.
+- **Not**: IndexedDB refresh/değişiklik sonrası silinirse müzikler kaybolur. Kullanıcı bunu biliyor ve klasörü elle yeniden seçmeyi tercih ediyor.
+- **Dosya adı**: `black.3.6.jsx` → `black.3.7.jsx`, `test_black.3.6.js` → `test_black.3.7.js`.
+- **Test**: 191 → 192 test (5 eski bulut testi kaldırıldı, 6 yeni v3.7 testi eklendi), 192/192 PASS.
+
 ## [black_3.6] — 2026-07-30
 
 ### Catbox CORS Sorunu Kalıcı Çözüm: Python Proxy Sunucu
