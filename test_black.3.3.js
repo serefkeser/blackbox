@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const parser = require('@babel/parser');
 
-const FILE = path.join(__dirname, 'black.3.2.jsx');
+const FILE = path.join(__dirname, 'black.3.3.jsx');
 const src = fs.readFileSync(FILE, 'utf-8');
 const lines = src.split('\n');
 let pass = 0, fail = 0;
@@ -34,10 +34,10 @@ t('GROQ_API_KEY empty', gq && gq[1] === '', gq ? `"${gq[1].slice(0,15)}"` : 'not
 t('No nvapi- key', !/nvapi-[A-Za-z0-9_-]{20,}/.test(src));
 t('No gsk_ key', !/gsk_[A-Za-z0-9]{20,}/.test(src));
 
-// 3. APP_VERSION (updated to 3.2)
-t('APP_VERSION major=2', /APP_VERSION\s*=\s*\{[\s\S]*?major:\s*3[,\s]/.test(src));
-t('APP_VERSION minor=2', /APP_VERSION\s*=\s*\{[\s\S]*?minor:\s*2[,\s]/.test(src));
-t('APP_VERSION hotfix=H3.2', /hotfix:\s*['"]H3\.2['"]/.test(src));
+// 3. APP_VERSION (updated to 3.3)
+t('APP_VERSION major=3', /APP_VERSION\s*=\s*\{[\s\S]*?major:\s*3[,\s]/.test(src));
+t('APP_VERSION minor=3', /APP_VERSION\s*=\s*\{[\s\S]*?minor:\s*3[,\s]/.test(src));
+t('APP_VERSION hotfix=H3.3', /hotfix:\s*['"]H3\.3['"]/.test(src));
 
 // 4. exportWorkflowLog uses APP_VERSION.toString()
 const exLog = src.match(/exportWorkflowLog[\s\S]{0,2000}/);
@@ -177,8 +177,8 @@ t('No hardcoded otonom_proxy_secret (except constant def)', hardcodedTokenLines.
 t('No hardcoded 2026/7/28 in static_gzt URLs', !/2026\/7\/28/.test(src));
 
 // 29. Version history
-t('Version history has black_3.2', /black_3\.2\s*\(black\.3\.2\)/.test(src));
-t('Last line says black_3.2', /OTONOM black_3\.2/.test(src));
+t('Version history has black_3.3', /black_3\.3\s*\(black\.3\.3\)/.test(src));
+t('Last line says black_3.3', /OTONOM black_3\.3/.test(src));
 
 // 30. Music search + preview
 t('Music search query state', /musicSearchQuery/.test(src));
@@ -269,9 +269,9 @@ t('playAudio has +0.3 buffer', /\+ 0\.3\).*v2\.9.*ses tam bitsin/.test(src));
 // TTS text cleaning — İYİ Parti fix
 t('TTS has İYİ Parti fix', /İYİ\\s\+Parti/.test(src) || /İYİ\s\+Parti/.test(src) || src.includes('İYİ Parti'));
 
-// Version history has black_3.2
-t('Version history has black_3.2 (v2.9 section)', /black_3\.2\s*\(black\.3\.2\)/.test(src));
-t('Last line says black_3.2 (v2.9 section)', /OTONOM black_3\.2/.test(src));
+// Version history has black_3.3
+t('Version history has black_3.3 (v2.9 section)', /black_3\.3\s*\(black\.3\.3\)/.test(src));
+t('Last line says black_3.3 (v2.9 section)', /OTONOM black_3\.3/.test(src));
 
 // ═══ 40. v3.0: Müzik kalıcı saklama — catbox.moe + localStorage ═══
 
@@ -334,9 +334,9 @@ t('Prompt still has ASLA uydurma', /ASLA uydurma/.test(src));
 t('Prompt still has Doğrulanamıyor', /Doğrulanamıyor/.test(src));
 t('Prompt still has KAYNAK DEĞİLDİR', /KAYNAK DEĞİLDİR/.test(src));
 
-// Version history has black_3.2
-t('Version history has black_3.2', /black_3\.2\s*\(black\.3\.2\)/.test(src));
-t('Last line says black_3.2', /OTONOM black_3\.2/.test(src));
+// Version history has black_3.3
+t('Version history has black_3.3', /black_3\.3\s*\(black\.3\.3\)/.test(src));
+t('Last line says black_3.3', /OTONOM black_3\.3/.test(src));
 
 // ═══ 42. v3.2: TTS normal hız + müzik gazete modu + catbox CORS fix ═══
 
@@ -351,9 +351,15 @@ t('Music selection outside if/else (v3.2 comment)', /v3\.2.*Müzik seçimi.*if\/
 t('No direct catbox.moe/user/api.php fetch in folder select', !/fetch\('https:\/\/catbox\.moe\/user\/api\.php'/.test(src));
 t('Folder select uses uploadMediaToCloud', /uploadMediaToCloud\(blob,\s*file\.name\)/.test(src));
 
+// ═══ 43. v3.3: emotionForImage scope fix ═══
+
+// emotionForImage if/else dışında tanımlı (scope fix)
+t('emotionForImage defined outside if/else', /const imgStyle.*\n.*const emotionForImage/.test(src));
+t('No duplicate emotionForImage in if block', !/if \(this\.state\.script\._isGuzelSoz\)[\s\S]{0,500}const emotionForImage/.test(src));
+
 // ═══ RESULTS ═══
 console.log('═══════════════════════════════════════════════════════════════');
-console.log(`  black.3.2.jsx (black_3.2) TEST RESULTS: ${pass} PASS / ${fail} FAIL / ${pass+fail} TOTAL`);
+console.log(`  black.3.3.jsx (black_3.3) TEST RESULTS: ${pass} PASS / ${fail} FAIL / ${pass+fail} TOTAL`);
 console.log('═══════════════════════════════════════════════════════════════');
 out.forEach(r => console.log(`  ${r}`));
 console.log('═══════════════════════════════════════════════════════════════');
@@ -361,6 +367,6 @@ if (fail > 0) {
   console.log(`  ❌ ${fail} TEST(LER) BAŞARISIZ — DÜZELTME GEREKİYOR`);
   process.exit(1);
 } else {
-  console.log(`  ✅ TÜM TESTLER BAŞARILI — black.3.2.jsx (black_3.2) ONAYLANDI`);
+  console.log(`  ✅ TÜM TESTLER BAŞARILI — black.3.3.jsx (black_3.3) ONAYLANDI`);
   process.exit(0);
 }

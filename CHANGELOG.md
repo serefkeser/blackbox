@@ -2,6 +2,14 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.3] — 2026-07-30
+
+### emotionForImage Scope Fix
+- **Sorun**: v3.2'de müzik seçimi if/else dışına taşındı ama `emotionForImage` değişkeni hala `if (_isGuzelSoz)` bloğu içinde `const` olarak tanımlıydı. Gazete okuma ve normal modda `ReferenceError: emotionForImage is not defined` hatası veriyordu.
+- **Çözüm**: `emotionForImage` tanımı if/else bloğunun öncesine taşındı. Artık tüm modlarda (güzel söz, gazete okuma, normal) erişilebilir.
+- **Dosya adı**: `black.3.2.jsx` → `black.3.3.jsx`, `test_black.3.2.js` → `test_black.3.3.js`
+- **Test**: 164 → 166 test (2 yeni test eklendi), 166/166 PASS
+
 ## [black_3.2] — 2026-07-30
 
 ### TTS Hızı + Müzik Seçimi + catbox CORS Fix

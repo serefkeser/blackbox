@@ -132,6 +132,10 @@
 //   - Müzik seçimi gazete okuma modunda da çalışacak şekilde if/else dışına taşındı
 //   - catbox.moe yedekleme uploadMediaToCloud üzerinden yapılır (CORS proxy failover dahil)
 //   - Bulut yedek başarısız mesajı daha doğru hale getirildi
+//
+// black_3.3 (black.3.3):
+//   - emotionForImage scope fix: değişken if/else dışına taşındı (gazete/normal modda ReferenceError fix)
+//   - Müzik seçimi artık tüm modlarda emotionForImage'e erişebiliyor
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -201,8 +205,8 @@ try {
 // ── APP_VERSION: Tek kaynak versiyon yönetimi ──────────────────────────────
 const APP_VERSION = {
   major: 3,
-  minor: 2,
-  hotfix: 'H3.2',
+  minor: 3,
+  hotfix: 'H3.3',
   toString() { return `BLACKBOX black_${this.major}.${this.minor}`; },
   toBadge() { return `${this.toString()} • One-Page`; }
 };
@@ -3586,12 +3590,12 @@ class MediaSynthesisService {
                   if (this.state.status === 'GENERATING_ASSETS') {
                     await this.updateProgress(30, 'Medya ve Sesler Sentezleniyor...', 'ASSETS');
                     const imgStyle = this.state.config.imageStyle || 'cinematic'; const imgRes = this.state.config.resolution || '4K';
+                    const emotionForImage = this.state.script._emotion || analyzeQuoteEmotion(this.state.script.videoSlides[0]?.spokenText || "");
 
                     if (this.state.script._isGuzelSoz) {
                       addSystemLog('Güzel söz modu: görseller ve ses üretiliyor...', 'info');
                       const slideCount = this.state.script._sceneCount || 3;
                       const quoteTextForImage = this.state.script.videoSlides[0]?.spokenText || "";
-                      const emotionForImage = this.state.script._emotion || analyzeQuoteEmotion(quoteTextForImage);
                       const realUrls = this.state.script._realImageUrls || [];
 
                       for (let i = 0; i < slideCount; i++) {
@@ -5815,5 +5819,5 @@ class ErrorBoundary extends React.Component {
             }
 
 
-// OTONOM black_3.2 — Gemini Canvas uyumlu versiyon
+// OTONOM black_3.3 — Gemini Canvas uyumlu versiyon
 // Tüm fonksiyonlar tek dosyada, kopyala-yapıştır ile Canvas'ta çalışır.
