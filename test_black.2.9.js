@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const parser = require('@babel/parser');
 
-const FILE = path.join(__dirname, 'anti.2.9.jsx');
+const FILE = path.join(__dirname, 'black.2.9.jsx');
 const src = fs.readFileSync(FILE, 'utf-8');
 const lines = src.split('\n');
 let pass = 0, fail = 0;
@@ -119,7 +119,7 @@ t('No duplicate const imgType', imgTypeCount <= 1, `${imgTypeCount} found`);
 const pf = src.match(/processSelectedFiles[\s\S]{0,3000}/);
 t('processSelectedFiles limit 100', pf && (pf[0].includes('100') || pf[0].includes('MAX_CUSTOM_SCENE_IMAGES')));
 
-// ═══ NEW TESTS for anti.2.9 (black_2.4+) ═══
+// ═══ NEW TESTS for black.2.9 (black_2.4+) ═══
 
 // 19. LinkedIn API integration
 t('shareToLinkedInAPI defined', /shareToLinkedInAPI\s*=/.test(src));
@@ -275,7 +275,7 @@ t('Last line says black_2.9', /OTONOM black_2\.9/.test(src));
 
 // ═══ RESULTS ═══
 console.log('═══════════════════════════════════════════════════════════════');
-console.log(`  anti.2.9.jsx (black_2.9) TEST RESULTS: ${pass} PASS / ${fail} FAIL / ${pass+fail} TOTAL`);
+console.log(`  black.2.9.jsx (black_2.9) TEST RESULTS: ${pass} PASS / ${fail} FAIL / ${pass+fail} TOTAL`);
 console.log('═══════════════════════════════════════════════════════════════');
 out.forEach(r => console.log(`  ${r}`));
 console.log('═══════════════════════════════════════════════════════════════');
@@ -283,6 +283,6 @@ if (fail > 0) {
   console.log(`  ❌ ${fail} TEST(LER) BAŞARISIZ — DÜZELTME GEREKİYOR`);
   process.exit(1);
 } else {
-  console.log(`  ✅ TÜM TESTLER BAŞARILI — anti.2.9.jsx (black_2.9) ONAYLANDI`);
+  console.log(`  ✅ TÜM TESTLER BAŞARILI — black.2.9.jsx (black_2.9) ONAYLANDI`);
   process.exit(0);
 }

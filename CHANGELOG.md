@@ -4,6 +4,10 @@ Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutul
 
 ## [black_2.9] — 2026-07-30
 
+### Dosya Yeniden Adlandırma
+- `anti.2.9.jsx` → `black.2.9.jsx` (anti öneki kaldırıldı, black olarak devam)
+- `test_anti.2.9.js` → `test_black.2.9.js`
+
 ### İddia Analizi Video Hataları Düzeltildi
 - **TTS hızı %25 artırıldı**: `RENDER_CONFIG.SPEECH_RATE: 1.25` — ağır/yapay konuşma fix
 - **Konu-dışı ekonomi verisi yasaklandı**: ADIM 2'ye "KONU EKONOMİ DEĞİLSE: EKONOMİK VERİLERİ ASLA KULLANMA, ENJETE ETME" kuralı eklendi. ADIM 4'e "KONU-DIŞI VERİ YASAĞI" eklendi — belediye soruşturması gibi konulara asgari ücret/açlık sınırı enjekte edilmesi önlendi
