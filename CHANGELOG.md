@@ -2,6 +2,30 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.23] — 2026-07-31
+
+### [KRİTİK] İddia Analizi Senaryo Yapısı Değişti
+
+#### Değişiklik
+İddia Analizi moduna yeni "GERÇEKTE NE OLUYOR" sahnesi eklendi. Artık akış:
+1. **Raw media** (video/ses) → sonuna kadar oynatılır
+2. **GERÇEKTE NE OLUYOR** → eleştirel, tarafsız genel değerlendirme (YENİ)
+3. **İddia analizleri** → iddia iddia fact-check sahneleri
+4. Kaynaklar sahnesi
+5. Son Söz + Outro
+
+#### Detaylar
+- Prompt'a yeni ADIM 3 eklendi: "GERÇEKTE NE OLUYOR (ELEŞTİREL GENEL DEĞERLENDİRME)"
+- Mevcut ADIM 3 → ADIM 4, ADIM 4 → ADIM 5 olarak kaydırıldı
+- ResponseSchema'ya `gercekNeOluyor` + `gercekNeOluyorImagePrompt` alanları eklendi
+- Workflow'ta raw media'dan hemen sonra GERÇEKTE NE OLUYOR sahnesi eklenir
+- Text/url/prompt modunda da 2. sahne olarak eklenir
+- Senaryo yapısına "GERÇEKTE NE OLUYOR" adımı eklendi
+
+#### Değişen Dosyalar
+- `black.3.23.jsx` — canonical dosya (yeni)
+- `test_black.3.23.js` — 497 test (497/497 PASS)
+
 ## [black_3.22] — 2026-07-31
 
 ### [KRİTİK] Sahneler Arası Boşluklar Tamamen Kaldırıldı
