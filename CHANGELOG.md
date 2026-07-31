@@ -2,6 +2,16 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.14] — 2026-07-31
+
+### [KRİTİK] Müzik Seçim Bug Fix — Kullanıcının Seçtiği Müzik Eziliyordu
+
+- **Sorun**: Workflow (asset üretim) aşamasında, kullanıcı müzik seçmiş olsa bile `matchMusicToEmotion()` + `Math.random()` ile duygu bazlı/rastgele müzik seçiliyordu. Seçilen müzik `script._bgmId`'ye yazılıyor, render'da `preferences.ambientSound` yerine `_bgmId` öncelikli kullanıldığı için kullanıcının seçimi eziliyordu.
+- **Çözüm (Workflow)**: Artık `preferences.ambientSound`'da geçerli bir müzik ID'si varsa (ambient type değilse) kullanıcı seçimi kullanılır. Seçim yoksa duygu bazlı otomatik seçim yapılır. `preferences.ambientSound`/`customBgMusicName`/`customBgMusicId` artık workflow'da override edilmiyor.
+- **Çözüm (GüzelSoz)**: `ambientSound='none'` iken otomatik `allMusic[0]` seçimi kaldırıldı. Kullanıcı 'none' seçtiyse müzik istememiştir.
+- **Dosya adı**: `black.3.13.jsx` → `black.3.14.jsx`, `test_black.3.13.js` → `test_black.3.14.js`.
+- **Test**: 288 → 302 test (14 yeni v3.14 testi eklendi), 302/302 PASS.
+
 ## [black_3.13] — 2026-07-30
 
 ### İddia Analizi: 5 Render Düzeltmesi (Audio Bleed + Altyazı + Grafik + Split-Screen + Watermark)

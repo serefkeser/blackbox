@@ -209,6 +209,8 @@
 //     müzik seçtiyse onu kullanır, seçmediyse duygu bazlı otomatik seçer.
 //   - GuzelSoz render'ında ambientSound='none' iken otomatik ilk müziği seçme kaldırıldı.
 //     Kullanıcı 'none' seçtiyse müzik istememiştir.
+//
+// black_3.13 (black.3.13):
 //   - [KRİTİK] Audio Bleed Fix: playAudio artık sourceNode döndürüyor, renderScene
 //     görsel süre dolduğunda ses hala çalıyorsa sourceNode.stop() ile hard-cut yapıyor.
 //     Outro'ya ses sızıntısı (audio bleed) önlendi.
