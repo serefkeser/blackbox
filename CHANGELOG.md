@@ -2,6 +2,32 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.19] — 2026-07-31
+
+### [KRİTİK] Gazete CDN Slug Fix — 5 Gazete Yüklenmiyordu
+
+#### Sorun
+Aydınlık CDN'inden (`img.aydinlik.com.tr`) 5 gazetenin manşet görseli yüklenmiyordu (404 hatası). Ekran görüntülerinde boş/kırık görseller görünüyordu.
+
+#### Kök Sebep
+Aydınlık'ın `gazete-mansetleri` sayfası HTML kaynağından 35 gazete slug'ı çıkarıldı. Kodumuzdaki 30 gazeteden 5'i sorunluydu:
+- **Nasıl Bir Ekonomi**: Slug `nasil-bir-ekonomi` → CDN'de `nb-ekonomi` olarak geçiyor (200 OK)
+- **Yeni Birlik**: Slug `yeni-birlik` → CDN'de `yenibirlik` (tire yok, 200 OK)
+- **Hürriyet**: CDN'den tamamen kaldırılmış (404 — tüm tarihler)
+- **Milliyet**: CDN'den tamamen kaldırılmış (404 — tüm tarihler)
+- **Yeni Mesaj**: CDN'den tamamen kaldırılmış (404 — tüm tarihler)
+
+#### Çözüm
+1. `NEWSPAPER_DIRECT_CONFIG` güncellendi:
+   - `Nasıl Bir Ekonomi` slug: `nasil-bir-ekonomi` → `nb-ekonomi`
+   - `Yeni Birlik` slug: `yeni-birlik` → `yenibirlik`
+   - `Hürriyet`, `Milliyet`, `Yeni Mesaj` listeden çıkarıldı (CDN'de yok)
+2. `ALLOWED_GAZETELER` güncellendi: 30 → 27 gazete
+3. Tüm "30 gazete" referansları "27 gazete" olarak güncellendi (log mesajları, UI başlığı, yorumlar)
+
+- **Dosya adı**: `black.3.18.jsx` → `black.3.19.jsx`, `test_black.3.18.js` → `test_black.3.19.js`.
+- **Test**: 454 → 467 test (13 yeni v3.19 testi eklendi), 467/467 PASS.
+
 ## [black_3.18] — 2026-07-31
 
 ### [KRİTİK] 12 Yeni Özellik — Render Resume, SRT, Thumbnail, Hashtag, Batch, Schedule, Transitions, Branding, A/B, Stock, Multilang TTS, Analytics
