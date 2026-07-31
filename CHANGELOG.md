@@ -2,6 +2,29 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.17] — 2026-07-31
+
+### [KRİTİK] Export Presets + Web Speech API + Preview/Low-Res Mode
+
+#### 1. Export Presets (Platform Hazır Ayarları)
+- **Sorun**: Her platform (Instagram, TikTok, YouTube vb.) farklı aspect ratio, çözünürlük, format ve bitrate gerektiriyordu. Kullanıcı bunları manuel ayarlamak zorundaydı.
+- **Çözüm**: `EXPORT_PRESETS` ve `CANVAS_DIMENSIONS` sabitleri eklendi. 7 platform preset'i: Instagram Reels (9:16, 1K, MP4, 30s, 4M), TikTok (9:16, 1K, MP4, 30s, 4M), YouTube Shorts (9:16, 2K, MP4, 60s, 8M), X/Twitter (16:9, 1K, MP4, 90s, 4M), Facebook (16:9, 1K, MP4, 90s, 4M), LinkedIn (16:9, 1K, MP4, 90s, 4M), Özel (manuel). Canvas boyutu artık `resolution + aspectRatio` kombinasyonundan dinamik hesaplanıyor. `MediaRecorder` ve `convertWebMtoMP4` artık preset/preview'dan dinamik bitrate okuyor.
+
+#### 2. Voice-over Web Speech API
+- **Sorun**: TTS üretimi için Gemini API anahtarı gerekiyordu. API kotası dolunca veya anahtar yoksa ses üretilemiyordu.
+- **Çözüm**: `generateVoiceOverWithWebSpeech` fonksiyonu eklendi — tarayıcı yerleşik ses motoru (`speechSynthesis`) ile API anahtarı gerektirmeden ses üretimi. TTS engine toggle: "Gemini TTS" / "Tarayıcı Sesi". Gemini TTS başarısız olursa otomatik Web Speech fallback. `generateAudio`'ya `ttsEngine` parametresi eklendi.
+
+#### 3. Preview/Low-Res Toggle
+- **Sorun**: Render testi için tam çözünürlükte AI görsel + TTS üretimi gerekiyordu — bu da zaman alıyordu.
+- **Çözüm**: Preview modunda canvas boyutu yarıya iner (360×640), FPS 15'e düşer, bitrate 1M olur, AI görsel ve TTS üretimi atlanır. Hızlı test imkanı. `RENDER_CONFIG`'e `PREVIEW_FPS`, `PREVIEW_BITRATE`, `PREVIEW_SCALE` sabitleri eklendi.
+
+#### 4. Syntax Fix
+- **Sorun**: `addSystemLog` çağrısında `TTS'ye` kesme işareti tek tırnak string'ini kırıyordu (Babel parse hatası 2275:53).
+- **Çözüm**: İlgili satır çift tırnak'a çevrildi.
+
+- **Dosya adı**: `black.3.16.jsx` → `black.3.17.jsx`, `test_black.3.16.js` → `test_black.3.17.js`.
+- **Test**: 345 → 399 test (54 yeni v3.17 testi eklendi), 399/399 PASS.
+
 ## [black_3.16] — 2026-07-31
 
 ### [KRİTİK] Export Progress Feedback + Granular ffmpeg Error Handling
