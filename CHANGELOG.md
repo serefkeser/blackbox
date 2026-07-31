@@ -2,6 +2,21 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.16] — 2026-07-31
+
+### [KRİTİK] Export Progress Feedback + Granular ffmpeg Error Handling
+
+#### 1. Export Progress Feedback
+- **Sorun**: Render bittikten sonra MP4 dönüşümü ve bulut yükleme sırasında UI sessizce donuyordu. Kullanıcı işlemin takıldığını düşünüyor, ffmpeg.wasm hatalarını göremiyordu.
+- **Çözüm**: Yeni `exportProgress` React state eklendi (`phase`, `percent`, `message`, `error`). Üç çağrı noktası (`autoSaveVideo`, `shareToBufferAPI`, `handleDownloadVideo`) artık `setExportProgress` ile progress bar güncelliyor. Full-screen overlay: yüzde, mesaj, progress bar, done/error state'leri.
+
+#### 2. Granular ffmpeg Error Handling
+- **Sorun**: `convertWebMtoMP4` hatasız çalışıyordu ama fail olduğunda sadece `addSystemLog`'a yazıyordu, kullanıcı görmüyordu. Hata mesajları teknik ve anlaşılmaz.
+- **Çözüm**: `convertWebMtoMP4` artık try/catch içinde. `_getFFmpegFriendlyError` helper'ı ile hata sınıflandırma: memory, codec, network, corrupt, timeout — her biri için kullanıcı dostu Türkçe mesaj. Hata durumunda `exportProgress.phase = 'error'` ile kırmızı overlay + hata mesajı + "Kapat" butonu gösteriliyor.
+
+- **Dosya adı**: `black.3.15.jsx` → `black.3.16.jsx`, `test_black.3.15.js` → `test_black.3.16.js`.
+- **Test**: 318 → 345 test (27 yeni v3.16 testi eklendi), 345/345 PASS.
+
 ## [black_3.15] — 2026-07-31
 
 ### [KRİTİK] Instagram FPS Fix — VFR→CFR + WebM→MP4 Dönüştürme
