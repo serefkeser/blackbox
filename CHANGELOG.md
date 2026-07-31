@@ -2,6 +2,65 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.18] — 2026-07-31
+
+### [KRİTİK] 12 Yeni Özellik — Render Resume, SRT, Thumbnail, Hashtag, Batch, Schedule, Transitions, Branding, A/B, Stock, Multilang TTS, Analytics
+
+#### 1. Render Resume (Kaldığı Yerden Devam)
+- **Sorun**: Uzun videolarda sekme kapanırsa render sıfırdan başlıyordu.
+- **Çözüm**: `AssetManagerService`'ye `saveRenderCheckpoint`/`getRenderCheckpoint`/`clearRenderCheckpoint` metodları eklendi. Her sahne sonunda `jobId` + `completedScene` IndexedDB'ye kaydedilir.
+
+#### 2. SRT Altyazı Export
+- **Sorun**: Dış platformlarda altyazı kullanılamıyordu.
+- **Çözüm**: `generateSRT` + `_formatSRTTime` fonksiyonları. `calculateSubtitles` çıktısından standart `.srt` dosyası üretir. UI'da "SRT" indir butonu.
+
+#### 3. Custom Thumbnail
+- **Sorun**: AI ürettiği kapak görseli her zaman istenmeyebilir.
+- **Çözüm**: `config.customThumbnail` alanı. Kullanıcı kendi görselini yükleyip AI üretimini override eder. UI'da "Kapak" butonu. Asset generation'da iki yolda da override uygulanır.
+
+#### 4. Auto-Hashtag
+- **Sorun**: Sosyal medya paylaşımında hashtag yoktu.
+- **Çözüm**: AI prompt'a hashtag talimatı eklendi. `responseSchema`'da `hashtags` alanı. `shareToBufferAPI`'de `options.hashtags` parametresi ile post text'e otomatik eklenir.
+
+#### 5. Batch/Queue Production
+- **Sorun**: Aynı anda tek bir konu işlenebiliyordu.
+- **Çözüm**: `batchQueue` + `batchCurrentIdx` state'leri. UI'da "Batch" butonu ile konu kuyruğa eklenir. Kuyruk panelinde sıra ve durum gösterimi.
+
+#### 6. Scheduled Publishing
+- **Sorun**: Paylaşım anında yapılıyordu, zamanlama yoktu.
+- **Çözüm**: `config.scheduledPublishAt` alanı. UI'da `datetime-local` input. `shareToBufferAPI`'de `options.scheduledAt` parametresi, Buffer GraphQL'de `mode: 'schedule'` + `scheduledAt`.
+
+#### 7. Video Transitions
+- **Sorun**: Sahneler arası geçiş sadece hard-cut veya basit fade'di.
+- **Çözüm**: `TRANSITION_STYLES` sabiti + `drawTransition` fonksiyonu. 5 efekt: crossfade, slide, zoom, wipe, dissolve. Config'de transition seçimi, UI'da CustomSelect.
+
+#### 8. Custom Branding
+- **Sorun**: Videolarda marka/watermark yoktu.
+- **Çözüm**: `drawBranding` fonksiyonu — logo + marka adını alt %6 banda çizer. `config.brandLogo` (base64) + `config.brandText`. Render loop'ta hem normal hem raw playback sahnesinde çağrılır. UI'da logo upload + text input.
+
+#### 9. A/B Varyasyon
+- **Sorun**: Tek bir hook önerisi vardı.
+- **Çözüm**: AI prompt'a A/B talimatı eklendi. `responseSchema`'da `hookVariations` alanı. `config.abVariation` toggle. UI'da "A/B" butonu. Workflow'ta `script.hookVariations` extraction.
+
+#### 10. Stock Footage
+- **Sorun**: AI görsel yerine gerçek video klibi kullanılamıyordu.
+- **Çözüm**: `fetchStockFootage` fonksiyonu — Pexels API'den konuya uygun video klipleri çeker. `config.useStockFootage` toggle. Asset generation'da `useStock` flag ile çağrılır. UI'da "Stock" butonu.
+
+#### 11. Multi-language TTS
+- **Sorun**: Sadece Türkçe seslendirme yapılabiliyordu.
+- **Çözüm**: `generateAudioMultilang` fonksiyonu — Gemini TTS'ye `lang` parametresi ekler. `config.narrationLanguage` alanı (TR/EN/DE/AR). Workflow'ta `narrationLanguage !== 'tr'` ise `generateAudioMultilang` çağrılır. UI'da dil seçimi CustomSelect.
+
+#### 12. Analytics Dashboard
+- **Sorun**: Paylaşılan post'ların metrikleri görülemiyordu.
+- **Çözüm**: `fetchBufferAnalytics` fonksiyonu — Buffer GraphQL'den post metrikleri (impressions, clicks, likes, shares, comments) çeker. `ANALYTICS_CONFIG` sabiti. UI'da "ANALİTİK" butonu, sonuçlar log panelinde gösterilir.
+
+#### Syntax Fix
+- **Sorun**: v3.18 UI eklendiğinde eski `<div>` wrapper'ın kapanış `</div>`'si geride kalmış, `</ErrorBoundary>` ile uyuşmazlık yaratmıştı.
+- **Çözüm**: Fazladan `</div>` kaldırıldı, Babel parse başarılı.
+
+- **Dosya adı**: `black.3.17.jsx` → `black.3.18.jsx`, `test_black.3.17.js` → `test_black.3.18.js`.
+- **Test**: 399 → 454 test (55 yeni v3.18 testi eklendi), 454/454 PASS.
+
 ## [black_3.17] — 2026-07-31
 
 ### [KRİTİK] Export Presets + Web Speech API + Preview/Low-Res Mode
