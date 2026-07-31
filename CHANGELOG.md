@@ -2,6 +2,22 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.21] — 2026-07-31
+
+### [KRİTİK] showSaveFilePicker Cross-Origin Fix + 401 Log Seviyesi Düzeltmesi
+
+#### Sorun
+Gemini Canvas gibi cross-origin iframe ortamlarında `showSaveFilePicker` SecurityError fırlatıyor, bu sarı (WARN) uyarı olarak loglanıyordu. Ayrıca 401 oturum yenileme ve `attemptSilentReauth` normal kurtarılabilir akışlar olmasına rağmen `warn` seviyesinde loglanıyordu.
+
+#### Çözüm
+- **showSaveFilePicker**: `useFileStreaming` fonksiyonuna `window.self !== window.top` kontrolü eklendi. İframe içindeyse `showSaveFilePicker` hiç çağrılmadan direkt bellek içi kayda düşülüyor — uyarı hiç oluşmuyor.
+- **401 Oturum Yenileme**: `fetchWithRetry` içindeki 401 log seviyesi `warn` → `info` yapıldı. Token yenileme normal retry akışının parçası.
+- **attemptSilentReauth**: "Yetkilendirme anahtarı yenileniyor" log seviyesi `warn` → `info` yapıldı.
+
+#### Değişen Dosyalar
+- `black.3.21.jsx` — canonical dosya (yeni)
+- `test_black.3.21.js` — 478 test (478/478 PASS)
+
 ## [black_3.20] — 2026-07-31
 
 ### [KRİTİK] Hürriyet ve Milliyet gazetemanset.gzt.com'dan eklendi

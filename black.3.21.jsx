@@ -297,6 +297,16 @@
 //     Audio-only raw medyada thumbnail görsel yerine temiz koyu arka plan kullanılıyor.
 //   - [DÜŞÜK] Watermark Overlay: Raw video oynatımında üst %6 ve alt %6 bant ile
 //     üçüncü taraf filigranları gizleniyor.
+//
+// black_3.21 (black.3.21):
+//   - [KRİTİK] showSaveFilePicker Cross-Origin Fix: Gemini Canvas gibi cross-origin
+//     iframe ortamlarında showSaveFilePicker SecurityError fırlatıyordu (sarı WARN).
+//     Artık window.self !== window.top kontrolü ile iframe tespit edilip direkt
+//     bellek içi kayda düşülüyor — uyarı hiç oluşmuyor.
+//   - [DÜŞÜK] 401 Oturum Yenileme log seviyesi warn → info: Token yenileme normal
+//     kurtarılabilir akışın parçası, uyarı değil bilgi olarak loglanıyor.
+//   - [DÜŞÜK] attemptSilentReauth log seviyesi warn → info: Aynı şekilde normal
+//     yenileme akışı info seviyesine çekildi.
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -368,8 +378,8 @@ try {
 // ── APP_VERSION: Tek kaynak versiyon yönetimi ──────────────────────────────
 const APP_VERSION = {
   major: 3,
-  minor: 20,
-  hotfix: 'H3.20',
+  minor: 21,
+  hotfix: 'H3.21',
   toString() { return `BLACKBOX black_${this.major}.${this.minor}`; },
   toBadge() { return `${this.toString()} • One-Page`; }
 };
@@ -6837,5 +6847,5 @@ class ErrorBoundary extends React.Component {
             }
 
 
-// OTONOM black_3.20 — Gemini Canvas uyumlu versiyon
+// OTONOM black_3.21 — Gemini Canvas uyumlu versiyon
 // Tüm fonksiyonlar tek dosyada, kopyala-yapıştır ile Canvas'ta çalışır.
