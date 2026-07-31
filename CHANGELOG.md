@@ -2,6 +2,21 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.15] — 2026-07-31
+
+### [KRİTİK] Instagram FPS Fix — VFR→CFR + WebM→MP4 Dönüştürme
+
+#### 1. ffmpeg VFR→CFR Dönüşümü
+- **Sorun**: `captureStream(0)` + manuel `requestFrame()` ile üretilen WebM, timer worker'ın `setInterval` gecikmeleri nedeniyle VFR (Variable Frame Rate) oluyordu. ffmpeg `-r 30` parametresi sadece çıkış frame rate'ini set eder, VFR→CFR dönüşümü yapmaz. Instagram Reels sabit 30fps CFR (Constant Frame Rate) şart koşar — VFR videoyu reddeder veya "23fps" gibi hatalı frame rate raporlar.
+- **Çözüm**: `convertWebMtoMP4` ffmpeg komutuna `-vf fps=30` (kare yeniden örnekleme) ve `-vsync cfr` (constant frame rate zorlama) eklendi.
+
+#### 2. shareToBufferAPI'de WebM→MP4 Otomatik Dönüştürme
+- **Sorun**: `shareToBufferAPI`'de video WebM blob URL ise MP4'e dönüştürülmeden doğrudan buluta yükleniyordu. Instagram WebM kabul etmez.
+- **Çözüm**: Video `blob:` veya `.webm` ise, `uploadMediaToCloud` çağrısından önce otomatik olarak `convertWebMtoMP4` ile MP4'e dönüştürülüyor.
+
+- **Dosya adı**: `black.3.14.jsx` → `black.3.15.jsx`, `test_black.3.14.js` → `test_black.3.15.js`.
+- **Test**: 302 → 318 test (16 yeni v3.15 testi eklendi), 318/318 PASS.
+
 ## [black_3.14] — 2026-07-31
 
 ### [KRİTİK] Müzik Seçim Bug Fix — Kullanıcının Seçtiği Müzik Eziliyordu
