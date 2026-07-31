@@ -2,6 +2,25 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.20] — 2026-07-31
+
+### [KRİTİK] Hürriyet ve Milliyet gazetemanset.gzt.com'dan eklendi
+
+#### Sorun
+black_3.19'da Hürriyet ve Milliyet Aydınlık CDN'inden kaldırıldığı için listeden çıkarılmıştı. Kullanıcı bu gazeteleri geri istedi.
+
+#### Çözüm
+- **gazetemanset.gzt.com** sayfası fetch edilip HTML parse edilir
+- `img.piri.net` CDN'inden görsel URL'leri `alt` attribute'undaki gazete adına göre eşleştirilir
+- Hürriyet ve Milliyet `NEWSPAPER_DIRECT_CONFIG`'e `type: 'gzt'` olarak eklendi
+- `fetchGazeteManşetleri` fonksiyonu `gzt` tipi için async HTML fetch + parse yapar
+- Toplam gazete sayısı: 27 → 29
+- Yeni Mesaj: Hiçbir CDN'de bulunamadı, eklenmedi
+
+#### Değişen Dosyalar
+- `black.3.20.jsx` — canonical dosya
+- `test_black.3.20.js` — 473 test (473/473 PASS)
+
 ## [black_3.19] — 2026-07-31
 
 ### [KRİTİK] Gazete CDN Slug Fix — 5 Gazete Yüklenmiyordu
