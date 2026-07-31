@@ -2,6 +2,37 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.22] — 2026-07-31
+
+### [KRİTİK] Sahneler Arası Boşluklar Tamamen Kaldırıldı
+
+#### Sorun
+Tüm modlarda (gazete, güzel söz, normal haber, iddia analizi) sahneler arası boşluklar/sessizlikler oluşuyordu. Sahne bittiğinde diğerine anında geçilmiyordu.
+
+#### Kök Sebep
+Render motorunda 7 boşluk kaynağı tespit edildi:
+1. `playAudio`: ses süresine +0.3sn ekstra görsel süre (sessiz)
+2. `rawSlideSecs`: her slayt için +0.3sn buffer
+3. Fade-to-black: outro öncesi 0.5sn siyaha geçiş
+4. `rawCushion`: video sonunda 0.5sn boş bekleme
+5. `transitionFrames`: min(8 kare) = ~0.27sn alpha < 1 kareleri
+6. Güzel Söz `bufferTime`: 1sn ekstra süre
+7. Güzel Söz `segDur`: +0.5sn/sahne buffer
+
+#### Çözüm
+Tüm boşluk kaynakları sıfırlandı:
+- `playAudio`: +0.3 → +0 (ses = görsel süre)
+- `rawSlideSecs`: +0.3 → +0 (slayt süresi = ses süresi)
+- Fade-to-black: tamamen kaldırıldı (hard cut outro)
+- `rawCushion`: 0.5 → 0 (video sonu boş bekleme yok)
+- `transitionFrames`: min(8 kare) → min(2 kare) (0.07sn — anında geçiş)
+- Güzel Söz `bufferTime`: 1 → 0
+- Güzel Söz `segDur`: +0.5 → +0.1 (minimum guard)
+
+#### Değişen Dosyalar
+- `black.3.22.jsx` — canonical dosya (yeni)
+- `test_black.3.22.js` — 486 test (486/486 PASS)
+
 ## [black_3.21] — 2026-07-31
 
 ### [KRİTİK] showSaveFilePicker Cross-Origin Fix + 401 Log Seviyesi Düzeltmesi
