@@ -1272,8 +1272,26 @@ const _getLangInstruction = (lang) => {
 
 // === ORTAK TIMER WORKER HELPER ===
 const _createTimerWorker = () => {
-  const frameInterval = RENDER_CONFIG.TIMER_WORKER_INTERVAL_MS; // v3.5: config'den oku, 30fps senkron
-  const code = `let interval; self.onmessage = function(e) { if (e.data === 'start') interval = setInterval(() => self.postMessage('tick'), ${frameInterval}); if (e.data === 'stop') clearInterval(interval); };`;
+  const frameInterval = RENDER_CONFIG.TIMER_WORKER_INTERVAL_MS;
+  const code = `
+    let timeout;
+    let nextFrameTime = 0;
+    self.onmessage = function(e) {
+      if (e.data === 'start') {
+        nextFrameTime = performance.now() + ${frameInterval};
+        (function tick() {
+          const now = performance.now();
+          const delay = Math.max(0, nextFrameTime - now);
+          timeout = setTimeout(function() {
+            self.postMessage('tick');
+            nextFrameTime += ${frameInterval};
+            tick();
+          }, delay);
+        })();
+      }
+      if (e.data === 'stop') { clearTimeout(timeout); }
+    };
+  `;
   return new Worker(ObjectURLManager.create(new Blob([code], { type: 'application/javascript' })));
 };
 

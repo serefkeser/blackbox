@@ -34,6 +34,13 @@ Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutul
 [SYS_LOG] [INFO] Sekme değiştirildi — video üretimi devam ediyor...
 ```
 
+## [black_3.24] — 2026-08-03
+
+### Video Frame Rate Fix (14fps → 30fps)
+- **Sorun 1 — Video 14fps'de üretiliyordu**: `captureStream(FPS)` parametresi değiştirildi ama sorun çözülmedi. Root cause: `_createTimerWorker` içindeki `setInterval` karesi FPS senkronizasyonu sağlamak için yeterince hassas değildi; `setInterval` drift yaptığında render döngüsü frame atlamış ve video düşük frame rate'de kaydedilmişti.
+- **Çözüm**: `_createTimerWorker` içindeki `setInterval` yerine `performance.now()` tabanlı drift-compensating `setTimeout` döngüsü eklendi. Her frame tick'i, bir sonraki frame zamanını hesaplayarak sabit aralıkta gönderir; kümülatif kayma önlenir. `captureStream(FPS)` parametresi geri alındı (tek başına yeterli değildi).
+- **Dosya adı**: `black.3.23.jsx` → `black.3.24.jsx`, `test_black.3.23.js` → `test_black.3.24.js`
+
 ## [black_3.23] — 2026-07-31
 
 ### [KRİTİK] İddia Analizi Senaryo Yapısı Değişti
