@@ -398,7 +398,7 @@ t('Python server /upload_cloud_media returns provider in response', /"provider"\
 
 // v3.7: manual music folder selection — no auto cloud upload (additional UI/log checks)
 t('Version history has black_3.11', /black_3.11\s*\(black\.3.11\)/.test(src));
-t('Last line says black_3.23', /OTONOM black_3\.23/.test(src));
+t('Last line says black_3.24', /OTONOM black_3\.24/.test(src));
 t('UI text says local listing', /dosyalar yerel olarak listelenir/.test(src));
 t('Success log says local saved', /yerel olarak kaydedildi/.test(src));
 
@@ -438,7 +438,7 @@ t('v3.11: Prompt has GÖRSEL YAZI KURALI', /G\u00d6RSEL YAZI KURALI/.test(src));
 t('v3.11: generateImage has no words no letters', /no words.*no letters.*no labels.*clean visual/.test(src));
 t('v3.11: Fade-to-black before outro', /fade-to-black|fadeAlpha.*rgba\(0,0,0/.test(src));
 t('v3.11: Version history has black_3.11', /black_3.11\s*\(black\.3.11\)/.test(src));
-t('v3.11: Last line says black_3.23', /OTONOM black_3\.23/.test(src));
+t('v3.11: Last line says black_3.24', /OTONOM black_3\.24/.test(src));
 
 // ═══ v3.11: Çok dilli Güzel Söz (FR/DE/TR) ═══
 t('v3.11: _translateQuoteMultilang function exists', /_translateQuoteMultilang/.test(src));
@@ -464,8 +464,8 @@ t('v3.11: Version history has black_3.11 multilang entry', /black_3\.11[\s\S]*?D
 
 
 // ═══ v3.12: İddia Analizi — İfşa Sahnesi Adaletsizlik Odaklı ═══
-t('v3.12: APP_VERSION minor is 23', /minor:\s*23/.test(src));
-t('v3.12: APP_VERSION hotfix is H3.23', /hotfix:\s*'H3.23'/.test(src));
+t('v3.12: APP_VERSION minor is 24', /minor:\s*24/.test(src));
+t('v3.12: APP_VERSION hotfix is H3.24', /hotfix:\s*'H3\.24'/.test(src));
 t('v3.12: İFŞA VE ADALETSİZLİK KURALI in prompt', /İFŞA VE ADALETSİZLİK KURALI/.test(src));
 t('v3.12: Old KARŞI-ÖRNEK VE İFŞA KURALI removed from prompt', !/KARŞI-ÖRNEK VE İFŞA KURALI:/.test(src.replace(/\/\/[^\n]*/g, '')));
 t('v3.12: Seçici hedefleme in prompt', /SEÇİCİ HEDEFLEME/.test(src));
@@ -480,11 +480,11 @@ t('v3.12: ADIM 4 mentions itibar suikasti', /itibar suikasti yapılıyor mu/.tes
 t('v3.12: ADIM 4 says adaletsizlik BİRİNCİLDİR', /adaletsizlik BİRİNCİLDİR/.test(src));
 t('v3.12: Version history has black_3.12 entry', /black_3\.12/.test(src));
 t('v3.12: Version history mentions adaletsizlik', /black_3\.12[\s\S]*?ADALETSİZLİK/.test(src));
-t('v3.12: Last line says black_3.23', /OTONOM black_3\.23/.test(src));
+t('v3.12: Last line says black_3.24', /OTONOM black_3\.24/.test(src));
 
 // ═══ v3.13: Audio Bleed + Altyazı + Chart Overlay + Split-Screen + Watermark ═══
-t('v3.13: APP_VERSION minor is 23', /minor:\s*23/.test(src));
-t('v3.13: APP_VERSION hotfix is H3.23', /hotfix:\s*'H3.23'/.test(src));
+t('v3.13: APP_VERSION minor is 24', /minor:\s*24/.test(src));
+t('v3.13: APP_VERSION hotfix is H3.24', /hotfix:\s*'H3\.24'/.test(src));
 t('v3.13: playAudio returns sourceNode', /return\s*\{[^}]*sourceNode/.test(src));
 t('v3.13: renderScene destructures sourceNode', /\{\s*exactDur,\s*totalDur,\s*audioEndPromise,\s*sourceNode\s*\}/.test(src));
 t('v3.13: audioEnded flag in renderScene', /let\s+audioEnded\s*=\s*false/.test(src));
@@ -509,11 +509,11 @@ t('v3.13: Watermark overlay top band', /ctx\.fillRect\(0,\s*0,\s*w,\s*h\s*\*\s*0
 t('v3.13: Watermark overlay bottom band', /ctx\.fillRect\(0,\s*h\s*\*\s*0\.94/.test(src));
 t('v3.13: Version history has black_3.13 entry', /black_3.22/.test(src));
 t('v3.13: Version history mentions Audio Bleed', /black_3\.13[\s\S]*?Audio Bleed/.test(src));
-t('v3.13: Last line says black_3.23', /OTONOM black_3\.23/.test(src));
+t('v3.13: Last line says black_3.24', /OTONOM black_3\.24/.test(src));
 
 // ═══ v3.14: Müzik Seçim Bug Fix ═══
-t('v3.14: APP_VERSION minor is 23', /minor:\s*23/.test(src));
-t('v3.14: APP_VERSION hotfix is H3.23', /hotfix:\s*'H3.23'/.test(src));
+t('v3.14: APP_VERSION minor is 24', /minor:\s*24/.test(src));
+t('v3.14: APP_VERSION hotfix is H3.24', /hotfix:\s*'H3\.24'/.test(src));
 t('v3.14: Workflow checks userBgmId before auto-select', /userBgmId.*isAmbientType/.test(src));
 t('v3.14: User music selection takes priority', /userBgmId\s*&&\s*!isAmbientType/.test(src));
 t('v3.14: User track found in musicLib', /allMusic\.find\(m\s*=>\s*m\.id\s*===\s*userBgmId\)/.test(src));
@@ -525,11 +525,11 @@ t('v3.14: GuzelSoz no auto music on none', !/ambientSound\s*===\s*'"'"'none'"'"'
 t('v3.14: GuzelSoz has v3.14 comment', /v3\.14.*none.*otomatik seçme/.test(src));
 t('v3.14: Version history has black_3.14 entry', /black_3\.14/.test(src));
 t('v3.14: Version history mentions Müzik Seçim', /black_3\.14[\s\S]*?Müzik Seçim/.test(src));
-t('v3.14: Last line says black_3.23', /OTONOM black_3\.23/.test(src));
+t('v3.14: Last line says black_3.24', /OTONOM black_3\.24/.test(src));
 
 // ═══ v3.15: Instagram FPS Fix (VFR→CFR + WebM→MP4) ═══
-t('v3.15: APP_VERSION minor is 23', /minor:\s*23/.test(src));
-t('v3.15: APP_VERSION hotfix is H3.23', /hotfix:\s*'H3.23'/.test(src));
+t('v3.15: APP_VERSION minor is 24', /minor:\s*24/.test(src));
+t('v3.15: APP_VERSION hotfix is H3.24', /hotfix:\s*'H3\.24'/.test(src));
 t('v3.15: ffmpeg has -vsync cfr', /'-vsync',\s*'cfr'/.test(src));
 t('v3.15: ffmpeg has -vf fps=30', /'-vf',\s*'fps=30'/.test(src));
 t('v3.15: ffmpeg still has -r 30', /'-r',\s*'30'/.test(src));
@@ -543,11 +543,11 @@ t('v3.15: Version history has black_3.15 entry', /black_3\.15/.test(src));
 t('v3.15: Version history mentions Instagram FPS', /black_3\.15[\s\S]*?Instagram FPS/.test(src));
 t('v3.15: Version history mentions VFR', /black_3\.15[\s\S]*?VFR/.test(src));
 t('v3.15: Version history mentions CFR', /black_3\.15[\s\S]*?CFR/.test(src));
-t('v3.15: Last line says black_3.23', /OTONOM black_3\.23/.test(src));
+t('v3.15: Last line says black_3.24', /OTONOM black_3\.24/.test(src));
 
 // ═══ v3.16: Export Progress Feedback + Granular ffmpeg Error Handling ═══
-t('v3.16: APP_VERSION minor is 23', /minor:\s*23/.test(src));
-t('v3.16: APP_VERSION hotfix is H3.23', /hotfix:\s*'H3.23'/.test(src));
+t('v3.16: APP_VERSION minor is 24', /minor:\s*24/.test(src));
+t('v3.16: APP_VERSION hotfix is H3.24', /hotfix:\s*'H3\.24'/.test(src));
 t('v3.16: _getFFmpegFriendlyError exists', /_getFFmpegFriendlyError/.test(src));
 t('v3.16: friendly error maps memory', /out of memory.*heap.*memory/i.test(src.replace(/'/g, '')));
 t('v3.16: friendly error maps codec', /codec.*unsupported.*not supported/i.test(src.replace(/'/g, '')));
@@ -572,7 +572,7 @@ t('v3.16: Export overlay has progress bar', /exportProgress\.percent.*%\`/.test(
 t('v3.16: Version history has black_3.16 entry', /black_3\.16/.test(src));
 t('v3.16: Version history mentions Export Progress', /black_3\.16[\s\S]*?Export Progress/.test(src));
 t('v3.16: Version history mentions Granular ffmpeg', /black_3\.16[\s\S]*?Granular ffmpeg/.test(src));
-t('v3.16: Last line says black_3.23', /OTONOM black_3\.23/.test(src));
+t('v3.16: Last line says black_3.24', /OTONOM black_3\.24/.test(src));
 
 // ═══ v3.18: Export Presets + Web Speech API + Preview/Low-Res Mode ═══
 
@@ -644,7 +644,7 @@ t('v3.18: Version history has black_3.18 entry', /black_3.22/.test(src));
 t('v3.18: Version history mentions Render Resume', /black_3.22[\s\S]*?Render Resume/i.test(src));
 t('v3.18: Version history mentions SRT', /black_3.22[\s\S]*?SRT/i.test(src));
 t('v3.18: Version history mentions Batch Queue', /black_3.22[\s\S]*?Batch/i.test(src));
-t('v3.18: Last line says black_3.23', /OTONOM black_3\.23/.test(src));
+t('v3.18: Last line says black_3.24', /OTONOM black_3\.24/.test(src));
 
 // ═══ v3.18: 12 New Features ═══
 
@@ -727,7 +727,7 @@ t('v3.18: ListPlus icon defined', /ListPlus.*svg/.test(src));
 
 // Version history
 t('v3.18: Version history has black_3.22 entry', /black_3\.20/.test(src));
-t('v3.18: Last line says black_3.23', /OTONOM black_3\.23/.test(src));
+t('v3.18: Last line says black_3.24', /OTONOM black_3\.24/.test(src));
 
 // ═══ v3.20: Hürriyet+Milliyet via gzt.com ═══
 t('v3.20: nb-ekonomi slug exists', /slug:\s*['"]nb-ekonomi['"]/.test(src));
@@ -742,7 +742,7 @@ t('v3.20: milliyet in ALLOWED_GAZETELER', /ALLOWED_GAZETELER\s*=\s*\[[^\]]*Milli
 t('v3.20: no yeni-mesaj in ALLOWED_GAZETELER', !/ALLOWED_GAZETELER\s*=\s*\[[^\]]*Yeni Mesaj/.test(src));
 t('v3.20: 29 gazete in config', (src.match(/name:\s*['"][^'"]+['"],\s*type:/g) || []).length === 29);
 t('v3.20: Version history has black_3.22 entry', /black_3\.20/.test(src));
-t('v3.20: Last line says black_3.23', /OTONOM black_3\.23/.test(src));
+t('v3.20: Last line says black_3.24', /OTONOM black_3\.24/.test(src));
 
 // ═══ RESULTS ═══
 console.log('═══════════════════════════════════════════════════════════════');
@@ -760,7 +760,7 @@ t('v3.21: useFileStreaming has self !== top check', /window\.self\s*!==\s*window
 t('v3.21: 401 log uses info not warn', /Oturum hatası.*401.*[\s\S]*?"info"/.test(src));
 t('v3.21: attemptSilentReauth uses info not warn', /Yetkilendirme anahtarı yenileniyor.*"info"/.test(src));
 t('v3.21: Version history has black_3.21 entry', /black_3\.21/.test(src));
-t('v3.21: Last line says black_3.23', /OTONOM black_3\.23/.test(src));
+t('v3.21: Last line says black_3.24', /OTONOM black_3\.24/.test(src));
 
 // ═══ v3.22: Sahneler arası boşluklar kaldırıldı ═══
 t('v3.22: playAudio has +0 not +0.3', /scaledExactDur\s*\+\s*0\)/.test(src));
@@ -771,7 +771,7 @@ t('v3.22: no fade-to-black code before outro', !/fadeAlpha.*fi\s*\/\s*fadeFrames
 t('v3.22: GuzelSoz bufferTime is 0', /bufferTime\s*=\s*0;/.test(src));
 t('v3.22: GuzelSoz segDur +0.1 not +0.5', /audioBuf\.duration\s*\+\s*0\.1/.test(src));
 t('v3.22: Version history has black_3.22 entry', /black_3\.22/.test(src));
-t('v3.22: Last line says black_3.23', /OTONOM black_3\.23/.test(src));
+t('v3.22: Last line says black_3.24', /OTONOM black_3\.24/.test(src));
 
 // ═══ v3.23: İddia Analizi senaryo yapısı değişti ═══
 t('v3.23: Prompt has ADIM 3 GERÇEKTE NE OLUYOR', /ADIM 3.*GER\u00c7EKTE NE OLUYOR/.test(src));
