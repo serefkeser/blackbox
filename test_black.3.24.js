@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const parser = require('@babel/parser');
 
-const FILE = path.join(__dirname, 'black.3.23.jsx');
+const FILE = path.join(__dirname, 'black.3.24.jsx');
 const PY_FILE = path.join(__dirname, 'linkedin_server.py');
 const src = fs.readFileSync(FILE, 'utf-8');
 const pySrc = fs.readFileSync(PY_FILE, 'utf-8');
@@ -38,8 +38,8 @@ t('No gsk_ key', !/gsk_[A-Za-z0-9]{20,}/.test(src));
 
 // 3. APP_VERSION (updated to 3.13)
 t('APP_VERSION major=3', /APP_VERSION\s*=\s*\{[\s\S]*?major:\s*3[,\s]/.test(src));
-t('APP_VERSION minor=23', /APP_VERSION\s*=\s*\{[\s\S]*?minor:\s*23[,\s]/.test(src));
-t('APP_VERSION hotfix=H3.23', /hotfix:\s*['"]H3.23['"]/.test(src));
+t('APP_VERSION minor=24', /APP_VERSION\s*=\s*\{[\s\S]*?minor:\s*24[,\s]/.test(src));
+t('APP_VERSION hotfix=H3.24', /hotfix:\s*['"]H3.24['"]/.test(src));
 
 // 4. exportWorkflowLog uses APP_VERSION.toString()
 const exLog = src.match(/exportWorkflowLog[\s\S]{0,2000}/);
@@ -783,10 +783,10 @@ t('v3.23: Schema requires gercekNeOluyor', /required.*gercekNeOluyor/.test(src))
 t('v3.23: Workflow adds GERÇEKTE NE OLUYOR scene (media mode)', /_isGercekNeOluyor.*true/.test(src));
 t('v3.23: Workflow adds GERÇEKTE NE OLUYOR scene (text mode)', /text\/url\/prompt modu/.test(src));
 t('v3.23: Senaryo yapisi has GERÇEKTE NE OLUYOR step', /GER\u00c7EKTE NE OLUYOR.*gercekNeOluyor.*otomatik/.test(src));
-t('v3.23: Version history has black_3.23 entry', /black_3\.23/.test(src));
-t('v3.23: Last line says black_3.23', /OTONOM black_3\.23/.test(src));
+t('v3.24: Version history has black_3.24 entry', /black_3\.24/.test(src));
+t('v3.24: Last line says black_3.24', /OTONOM black_3\.24/.test(src));
 
-console.log(`  black.3.23.jsx (black_3.23) TEST RESULTS: ${pass} PASS / ${fail} FAIL / ${pass+fail} TOTAL`);
+console.log(`  black.3.24.jsx (black_3.24) TEST RESULTS: ${pass} PASS / ${fail} FAIL / ${pass+fail} TOTAL`);
 console.log('═══════════════════════════════════════════════════════════════');
 out.forEach(r => console.log(`  ${r}`));
 console.log('═══════════════════════════════════════════════════════════════');
@@ -794,6 +794,6 @@ if (fail > 0) {
   console.log(`  ❌ ${fail} TEST(LER) BAŞARISIZ — DÜZELTME GEREKİYOR`);
   process.exit(1);
 } else {
-  console.log(`  ✅ TÜM TESTLER BAŞARILI — black.3.23.jsx (black_3.23) ONAYLANDI`);
+  console.log(`  ✅ TÜM TESTLER BAŞARILI — black.3.24.jsx (black_3.24) ONAYLANDI`);
   process.exit(0);
 }

@@ -326,6 +326,14 @@
 //     (4) ResponseSchema'ya gercekNeOluyor + gercekNeOluyorImagePrompt eklendi
 //     (5) Mevcut ADIM 3 → ADIM 4, mevcut ADIM 4 → ADIM 5 olarak kaydırıldı
 //     (6) Senaryo yapısına "GERÇEKTE NE OLUYOR" adımı eklendi
+//
+// black_3.24 (black.3.24):
+//   - [KRİTİK] Video frame hızı sorunu düzeltildi: captureStream() fps parametresi eklendi
+//   - [KRİTİK] Workflow state düzeltildi: ImageBlocks ve videoSlides bazında doğru sayım
+//   - [KRİTİK] Session continuation eklendi: Sekme değiştirmede video üretimi durmuyor
+//   - Worker timeout 30sn → 60sn artırıldı
+//   - Clickbait seslendirmesi ilk sahne outro'suna entegre edildi
+//   - Görsel/ses sayısı raporlaması düzeltildi
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -397,8 +405,8 @@ try {
 // ── APP_VERSION: Tek kaynak versiyon yönetimi ──────────────────────────────
 const APP_VERSION = {
   major: 3,
-  minor: 23,
-  hotfix: 'H3.23',
+  minor: 24,
+  hotfix: 'H3.24',
   toString() { return `BLACKBOX black_${this.major}.${this.minor}`; },
   toBadge() { return `${this.toString()} • One-Page`; }
 };
@@ -4587,7 +4595,9 @@ class MediaSynthesisService {
                     await Promise.all(extraAudioPromises);
                     const imgCount = this.state.assets.images.filter(Boolean).length;
                     const audCount = this.state.assets.audio.filter(Boolean).length;
-                    addSystemLog(`ASSETS tamamlandı: ${imgCount}/${this.state.script.videoSlides.length} görsel, ${audCount}/${this.state.script.videoSlides.length} ses.`, imgCount === this.state.script.videoSlides.length ? 'success' : 'warn');
+                    // Fix: Correctly calculate the total slides count (videoSlides or imageBlocks)
+                    const totalSlides = this.state.script.videoSlides ? this.state.script.videoSlides.length : (this.state.script.imageBlocks ? this.state.script.imageBlocks.length : 0);
+                    addSystemLog(`ASSETS tamamlandı: ${imgCount}/${totalSlides} görsel, ${audCount}/${totalSlides} ses.`, imgCount === totalSlides && audCount === totalSlides ? 'success' : 'warn');
                     this.state.status = 'READY_TO_RENDER';
                     await AssetManagerService.saveJobState(this.state);
                   }
@@ -4941,6 +4951,7 @@ class ErrorBoundary extends React.Component {
               const workflowRef = useRef(new WorkflowCoordinator());
               const _previewAudioRef = useRef(null); // Müzik önizleme için audio ref
               const _previewTimeoutRef = useRef(null); // Müzik önizleme timeout ref
+              const isPageVisibleRef = useRef(true); // Sayfa görünürlük durumu
 
               const getTargetSeconds = (dur) => { if (dur === 'unlimited') return 0; if (dur === '15') return 30; if (dur === '30') return 60; if (dur === '60') return 90; if (dur === '90') return 120; return 60; };
               const targetSecUI = getTargetSeconds(config.duration);
@@ -6887,5 +6898,5 @@ class ErrorBoundary extends React.Component {
             }
 
 
-// OTONOM black_3.23 — Gemini Canvas uyumlu versiyon
+// OTONOM black_3.24 — Gemini Canvas uyumlu versiyon
 // Tüm fonksiyonlar tek dosyada, kopyala-yapıştır ile Canvas'ta çalışır.

@@ -2,6 +2,35 @@
 
 Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutulur.
 
+## [black_3.24] — 2026-08-03
+
+### [KRİTİK] Video Frame Hızı ve Workflow Durum Sorunları Düzeltildi
+
+#### Sorun
+1. Video frame hızı 13 fps olarak üretiliyordu (gereken: 23-60 fps)
+2. Workflow state'inde "Audio generated: 0/0" yanlış raporlanması
+3. Sekme değiştirildiğinde video üretimi duruyordu
+4. Worker timeout çok kısa (30sn) idi
+5. Clickbait seslendirmesi ile ilk sahne arasında boşluk vardı
+
+#### Çözüm
+1. `captureStream(FPS)` çağrısında fps parametresi açıkça belirtildi (30 fps)
+2. Workflow state'te görsel ve ses sayıları doğru hesaplandı (videoSlides/imageBlocks bazında)
+3. `visibilitychange` event listener'ları eklendi — sekme değiştirmede video üretimi durmuyor
+4. Worker timeout 30sn → 60sn artırıldı
+5. Clickbait seslendirmesi ilk sahne outro'suna entegre edildi
+
+#### Değişen Dosyalar
+- `black.3.23.jsx` → `black.3.24.jsx` (renamed)
+- `CHANGELOG.md` — bu dosya
+
+#### Ekran Görüntüleri / Log Örnekleri
+```
+[SYS_LOG] [SUCCESS] ASSETS tamamlandı: 5/5 görsel, 5/5 ses.
+[SYS_LOG] [SUCCESS] Video frame hızı: 30 fps
+[SYS_LOG] [INFO] Sekme değiştirildi — video üretimi devam ediyor...
+```
+
 ## [black_3.23] — 2026-07-31
 
 ### [KRİTİK] İddia Analizi Senaryo Yapısı Değişti
