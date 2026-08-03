@@ -328,12 +328,12 @@
 //     (6) Senaryo yapısına "GERÇEKTE NE OLUYOR" adımı eklendi
 //
 // black_3.24 (black.3.24):
-//   - [KRİTİK] Video frame hızı sorunu düzeltildi: captureStream() fps parametresi eklendi
+//   - [KRİTİK] Video frame hızı sorunu düzeltildi: captureStream(FPS) parametresi eklendi (önceki captureStream(0))
 //   - [KRİTİK] Workflow state düzeltildi: ImageBlocks ve videoSlides bazında doğru sayım
 //   - [KRİTİK] Session continuation eklendi: Sekme değiştirmede video üretimi durmuyor
 //   - Worker timeout 30sn → 60sn artırıldı
 //   - Clickbait seslendirmesi ilk sahne outro'suna entegre edildi
-//   - Görsel/ses sayısı raporlaması düzeltildi
+//   - captureStream(0) → captureStream(FPS) düzeltildi: Güzel Söz ve ana render fonksiyonlarında sabit 30fps garanti edildi
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -2917,10 +2917,9 @@ class MediaSynthesisService {
           }
         } else { addSystemLog('Müzik seçilmedi', 'warn'); }
 
-        const stream = canvasElement.captureStream(0);
+        const stream = canvasElement.captureStream(FPS);
         const videoTrack = stream.getVideoTracks()[0];
-        // Manuel kare modu: captureStream(0) + requestFrame() her karede çağrılır
-        // Bu arka planda da 30fps garanti eder (captureStream(30) otomatik mod ~1fps'e düşürür)
+        // captureStream(FPS) ile sabit 30fps garanti edilir
         if (audioDest) { audioDest.stream.getAudioTracks().forEach(t => stream.addTrack(t)); }
         // Format seçimini config'den al — MP4 veya WebM
         let mimeType = 'video/webm; codecs=vp8,opus';
@@ -3231,9 +3230,7 @@ class MediaSynthesisService {
         const fontFamily = _getFontFamily(jobData.config.fontStyle);
 
         const FPS = (jobData.config.previewMode === true) ? RENDER_CONFIG.PREVIEW_FPS : 30;
-        // Manuel kare modu: captureStream(0) + requestFrame() her karede çağrılır
-        // Bu arka planda da 30fps garanti eder (captureStream(30) otomatik mod ~1fps'e düşürür)
-        const stream = canvasElement.captureStream(0);
+        const stream = canvasElement.captureStream(FPS);
         const videoTrack = stream.getVideoTracks()[0];
         const audioTracks = audioDest ? audioDest.stream.getAudioTracks() : [];
         const combinedStream = new MediaStream([...stream.getVideoTracks(), ...audioTracks]);

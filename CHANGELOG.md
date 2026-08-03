@@ -12,16 +12,19 @@ Tüm önemli değişiklikler bu dosyada tarih sırasıyla (yeniden eskiye) tutul
 3. Sekme değiştirildiğinde video üretimi duruyordu
 4. Worker timeout çok kısa (30sn) idi
 5. Clickbait seslendirmesi ile ilk sahne arasında boşluk vardı
+6. captureStream(0) kullanımı — tarayıcı varsayılan FPS kullanılıyordu, sabit 30fps garanti edilmiyordu
 
 #### Çözüm
-1. `captureStream(FPS)` çağrısında fps parametresi açıkça belirtildi (30 fps)
+1. `captureStream(FPS)` çağrısında fps parametresi açıkça belirtildi (30 fps) — hem Güzel Söz hem ana render fonksiyonlarında
 2. Workflow state'te görsel ve ses sayıları doğru hesaplandı (videoSlides/imageBlocks bazında)
 3. `visibilitychange` event listener'ları eklendi — sekme değiştirmede video üretimi durmuyor
 4. Worker timeout 30sn → 60sn artırıldı
 5. Clickbait seslendirmesi ilk sahne outro'suna entegre edildi
+6. captureStream(0) → captureStream(FPS) ile sabit frame rate garanti edildi
 
 #### Değişen Dosyalar
 - `black.3.23.jsx` → `black.3.24.jsx` (renamed)
+- `test_black.3.23.js` → `test_black.3.24.js` (renamed)
 - `CHANGELOG.md` — bu dosya
 
 #### Ekran Görüntüleri / Log Örnekleri
